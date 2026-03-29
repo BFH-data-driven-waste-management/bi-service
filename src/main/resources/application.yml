@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: dss-backend
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+server:
+  port: 8081
