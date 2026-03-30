@@ -7,5 +7,5 @@ public record KpiMetricResponse(
         BigDecimal previousValue,
         BigDecimal deltaAbsolute,
         BigDecimal deltaRelative,
-        TrendDirection trendDirection
+        TrendDirectionResponse trendDirectionResponse
 ) {}

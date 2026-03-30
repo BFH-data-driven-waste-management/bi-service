@@ -1,7 +1,7 @@
 package ch.bfh.ddwm.dssbackend.dashboard;
 
-import ch.bfh.ddwm.dssbackend.dashboard.dto.BinTypeCountResponse;
-import ch.bfh.ddwm.dssbackend.dashboard.dto.DashboardRawData;
+import ch.bfh.ddwm.dssbackend.dashboard.model.CountOfBinType;
+import ch.bfh.ddwm.dssbackend.dashboard.model.SystemDayAggregated;
 import ch.bfh.ddwm.dssbackend.jooq.generated.Tables;
 import ch.bfh.ddwm.dssbackend.jooq.generated.tables.DimBin;
 import ch.bfh.ddwm.dssbackend.jooq.generated.tables.FactSystemDay;
@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 
 @Repository
@@ -25,7 +26,7 @@ public class DashboardRepository {
         this.dsl = dsl;
     }
 
-    public DashboardRawData fetchDashboardRawData(
+    public Optional<SystemDayAggregated> fetchDashboardRawData(
             int currentDateKey,
             int previous7DateKey,
             int previous30DateKey,
@@ -66,18 +67,10 @@ public class DashboardRepository {
                 .fetchOne();
 
         if (result == null) {
-            return new DashboardRawData(
-                    0L,
-                    BigDecimal.ZERO, BigDecimal.ZERO,
-                    BigDecimal.ZERO, BigDecimal.ZERO,
-                    BigDecimal.ZERO, BigDecimal.ZERO,
-                    BigDecimal.ZERO, BigDecimal.ZERO,
-                    BigDecimal.ZERO, BigDecimal.ZERO,
-                    BigDecimal.ZERO, BigDecimal.ZERO
-            );
+            return Optional.empty();
         }
 
-        return new DashboardRawData(
+        return Optional.of(new SystemDayAggregated(
                 longValue(result.get(curr.ACTIVE_BIN_COUNT)),
 
                 decimalValue(result.get(curr.BIN_VISIT_COUNT_7D)),
@@ -97,10 +90,10 @@ public class DashboardRepository {
 
                 decimalValue(result.get(curr.OVERFULL_VISIT_30D)),
                 decimalValue(result.get(prev30.OVERFULL_VISIT_30D))
-        );
+        ));
     }
 
-    public List<BinTypeCountResponse> findActiveBinCountByType() {
+    public List<CountOfBinType> findActiveBinCountByType() {
         var countField = DSL.count().as("cnt");
         return dsl
                 .select(DIM_BIN.BIN_TYPE, countField)
@@ -108,7 +101,7 @@ public class DashboardRepository {
                 .where(DIM_BIN.CURRENT_ACTIVE_FLAG.isTrue())
                 .groupBy(DIM_BIN.BIN_TYPE)
                 .orderBy(DIM_BIN.BIN_TYPE.asc())
-                .fetch(record -> new BinTypeCountResponse(
+                .fetch(record -> new CountOfBinType(
                         record.get(DIM_BIN.BIN_TYPE),
                         record.get(countField) != null ? record.get(countField) : 0L
                 ));
