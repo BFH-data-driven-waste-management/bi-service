@@ -1,17 +1,22 @@
 package ch.bfh.ddwm.dssbackend.dashboard;
 
+import ch.bfh.ddwm.dssbackend.dashboard.dto.BinTypeCountResponse;
+import ch.bfh.ddwm.dssbackend.jooq.generated.Tables;
+import ch.bfh.ddwm.dssbackend.jooq.generated.tables.DimBin;
+import ch.bfh.ddwm.dssbackend.jooq.generated.tables.FactSystemDay;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
-
-import static ch.bfh.ddwm.dssbackend.jooq.generated.tables.FactSystemDay.FACT_SYSTEM_DAY;
-import static org.jooq.impl.DSL.field;
+import java.util.List;
 
 
 @Repository
 public class DashboardRepository {
+
+    private static final FactSystemDay FACT_SYSTEM_DAY = Tables.FACT_SYSTEM_DAY;
+    private static final DimBin DIM_BIN = Tables.DIM_BIN;
 
     private final DSLContext dsl;
 
@@ -29,27 +34,6 @@ public class DashboardRepository {
         var prev7 = FACT_SYSTEM_DAY.as("prev7");
         var prev30 = FACT_SYSTEM_DAY.as("prev30");
         var prev90 = FACT_SYSTEM_DAY.as("prev90");
-
-        var byTypeJsonField = field("""
-                (
-                  SELECT COALESCE(
-                    json_agg(
-                      json_build_object(
-                        'label', grouped.bin_type,
-                        'count', grouped.cnt
-                      )
-                      ORDER BY grouped.bin_type
-                    )::text,
-                    '[]'
-                  )
-                  FROM (
-                    SELECT dim_bin.bin_type, COUNT(*) AS cnt
-                    FROM analytics.dim_bin dim_bin
-                    WHERE dim_bin.current_active_flag = true
-                    GROUP BY dim_bin.bin_type
-                  ) grouped
-                )
-                """, String.class).as("by_type_json");
 
         var result = dsl
                 .select(
@@ -71,9 +55,7 @@ public class DashboardRepository {
                         prev90.LOW_FILL_EMPTIED_RATIO_90D,
 
                         curr.OVERFULL_VISIT_30D,
-                        prev30.OVERFULL_VISIT_30D,
-
-                        byTypeJsonField
+                        prev30.OVERFULL_VISIT_30D
                 )
                 .from(curr)
                 .leftJoin(prev7).on(prev7.DATE_KEY.eq(previous7DateKey))
@@ -90,8 +72,7 @@ public class DashboardRepository {
                     BigDecimal.ZERO, BigDecimal.ZERO,
                     BigDecimal.ZERO, BigDecimal.ZERO,
                     BigDecimal.ZERO, BigDecimal.ZERO,
-                    BigDecimal.ZERO, BigDecimal.ZERO,
-                    "[]"
+                    BigDecimal.ZERO, BigDecimal.ZERO
             );
         }
 
@@ -114,10 +95,22 @@ public class DashboardRepository {
                 decimalValue(result.get(prev90.LOW_FILL_EMPTIED_RATIO_90D)),
 
                 decimalValue(result.get(curr.OVERFULL_VISIT_30D)),
-                decimalValue(result.get(prev30.OVERFULL_VISIT_30D)),
-
-                result.get(byTypeJsonField)
+                decimalValue(result.get(prev30.OVERFULL_VISIT_30D))
         );
+    }
+
+    public List<BinTypeCountResponse> findActiveBinCountByType() {
+        var countField = DSL.count().as("cnt");
+        return dsl
+                .select(DIM_BIN.BIN_TYPE, countField)
+                .from(DIM_BIN)
+                .where(DIM_BIN.CURRENT_ACTIVE_FLAG.isTrue())
+                .groupBy(DIM_BIN.BIN_TYPE)
+                .orderBy(DIM_BIN.BIN_TYPE.asc())
+                .fetch(record -> new BinTypeCountResponse(
+                        record.get(DIM_BIN.BIN_TYPE),
+                        record.get(countField) != null ? record.get(countField) : 0L
+                ));
     }
 
     public Integer findLatestAvailableDateKey(int maxDateKeyInclusive) {
@@ -135,4 +128,5 @@ public class DashboardRepository {
     private long longValue(Number value) {
         return value != null ? value.longValue() : 0L;
     }
+
 }

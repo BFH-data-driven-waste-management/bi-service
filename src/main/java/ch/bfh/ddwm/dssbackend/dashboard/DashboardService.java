@@ -1,15 +1,11 @@
 package ch.bfh.ddwm.dssbackend.dashboard;
 
 import ch.bfh.ddwm.dssbackend.dashboard.dto.*;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
 
 @Service
 public class DashboardService {
@@ -17,7 +13,6 @@ public class DashboardService {
     private static final int KPI_SCALE = 4;
 
     private final DashboardRepository repository;
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public DashboardService(DashboardRepository repository) {
         this.repository = repository;
@@ -47,7 +42,7 @@ public class DashboardService {
 
         InstalledBinsResponse installedBins = new InstalledBinsResponse(
                 raw.activeBinCount(),
-                parseByTypeJson(raw.byTypeJson())
+                repository.findActiveBinCountByType()
         );
 
         return new DashboardResponse(
@@ -59,21 +54,6 @@ public class DashboardService {
                 buildMetric(raw.lowFillEmptyingShare90dCurrent(), raw.lowFillEmptyingShare90dPrevious()),
                 buildMetric(raw.overfullEvents30dCurrent(), raw.overfullEvents30dPrevious())
         );
-    }
-
-    private List<BinTypeCountResponse> parseByTypeJson(String byTypeJson) {
-        try {
-            if (byTypeJson == null || byTypeJson.isBlank()) {
-                return Collections.emptyList();
-            }
-
-            return objectMapper.readValue(
-                    byTypeJson,
-                    new TypeReference<>() {}
-            );
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to parse byTypeJson from dashboard query", e);
-        }
     }
 
     private KpiMetricResponse buildMetric(BigDecimal currentValue, BigDecimal previousValue) {
