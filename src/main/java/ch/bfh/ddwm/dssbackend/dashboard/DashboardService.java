@@ -17,11 +17,10 @@ public class DashboardService {
     private static final int KPI_SCALE = 4;
 
     private final DashboardRepository repository;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public DashboardService(DashboardRepository repository, ObjectMapper objectMapper) {
+    public DashboardService(DashboardRepository repository) {
         this.repository = repository;
-        this.objectMapper = objectMapper;
     }
 
     public DashboardResponse getDashboard() {
