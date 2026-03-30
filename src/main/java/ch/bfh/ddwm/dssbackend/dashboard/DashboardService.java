@@ -34,15 +34,11 @@ public class DashboardService {
 
         LocalDate referenceDate = fromDateKey(currentDateKey);
 
-        int previous7DateKey = toDateKey(referenceDate.minusDays(7));
-        int previous30DateKey = toDateKey(referenceDate.minusDays(30));
-        int previous90DateKey = toDateKey(referenceDate.minusDays(90));
-
         SystemDayAggregated systemDayAggregated = repository.latestSystemDayAggregatedByPredecessor(
                         currentDateKey,
-                        previous7DateKey,
-                        previous30DateKey,
-                        previous90DateKey
+                        toDateKey(referenceDate.minusDays(7)),
+                        toDateKey(referenceDate.minusDays(30)),
+                        toDateKey(referenceDate.minusDays(90))
                 )
                 .orElseThrow(() -> new IllegalStateException("No fact_system_day snapshot available for today"));
 
@@ -51,14 +47,21 @@ public class DashboardService {
                 mapCountOfBinTypes()
         );
 
+        KpiMetricResponse visits = buildIntegerMetric(systemDayAggregated.visits7dCurrent(), systemDayAggregated.visits7dPrevious());
+        KpiMetricResponse emptyings = buildIntegerMetric(systemDayAggregated.emptyings7dCurrent(), systemDayAggregated.emptyings7dPrevious());
+        KpiMetricResponse emptyingRate = buildDecimalMetric(systemDayAggregated.emptyingRate7dCurrent(), systemDayAggregated.emptyingRate7dPrevious());
+        KpiMetricResponse lowFillVisitShare = buildDecimalMetric(systemDayAggregated.lowFillVisitShare90dCurrent(), systemDayAggregated.lowFillVisitShare90dPrevious());
+        KpiMetricResponse lowFillEmptyingShare = buildDecimalMetric(systemDayAggregated.lowFillEmptyingShare90dCurrent(), systemDayAggregated.lowFillEmptyingShare90dPrevious());
+        KpiMetricResponse overfullEvents = buildIntegerMetric(systemDayAggregated.overfullEvents30dCurrent(), systemDayAggregated.overfullEvents30dPrevious());
+
         return new DashboardResponse(
                 installedBins,
-                buildMetric(systemDayAggregated.visits7dCurrent(), systemDayAggregated.visits7dPrevious()),
-                buildMetric(systemDayAggregated.emptyings7dCurrent(), systemDayAggregated.emptyings7dPrevious()),
-                buildMetric(systemDayAggregated.emptyingRate7dCurrent(), systemDayAggregated.emptyingRate7dPrevious()),
-                buildMetric(systemDayAggregated.lowFillVisitShare90dCurrent(), systemDayAggregated.lowFillVisitShare90dPrevious()),
-                buildMetric(systemDayAggregated.lowFillEmptyingShare90dCurrent(), systemDayAggregated.lowFillEmptyingShare90dPrevious()),
-                buildMetric(systemDayAggregated.overfullEvents30dCurrent(), systemDayAggregated.overfullEvents30dPrevious())
+                visits,
+                emptyings,
+                emptyingRate,
+                lowFillVisitShare,
+                lowFillEmptyingShare,
+                overfullEvents
         );
     }
 
@@ -68,39 +71,40 @@ public class DashboardService {
                 .toList();
     }
 
-    private KpiMetricResponse buildMetric(int currentValue, int previousValue) {
-        return buildMetric(BigDecimal.valueOf(currentValue), BigDecimal.valueOf(previousValue));
+    private KpiMetricResponse buildIntegerMetric(int currentValue, int previousValue) {
+        return buildDecimalMetric(BigDecimal.valueOf(currentValue), BigDecimal.valueOf(previousValue));
     }
 
-    private KpiMetricResponse buildMetric(BigDecimal currentValue, BigDecimal previousValue) {
-        BigDecimal deltaAbsolute = currentValue.subtract(previousValue);
-        BigDecimal deltaRelative = safeRelativeDelta(currentValue, previousValue);
-        TrendDirectionResponse trendDirection = determineTrend(deltaAbsolute);
+    private KpiMetricResponse buildDecimalMetric(BigDecimal currentValue, BigDecimal previousValue) {
+        BigDecimal absoluteDelta = currentValue.subtract(previousValue);
+        BigDecimal relativeDelta = calculateRelativeChangeOrZero(currentValue, previousValue);
+        TrendDirectionResponse trendDirection = determineTrend(absoluteDelta);
 
         return new KpiMetricResponse(
                 scale(currentValue),
                 scale(previousValue),
-                scale(deltaAbsolute),
-                scale(deltaRelative),
+                scale(absoluteDelta),
+                scale(relativeDelta),
                 trendDirection
         );
     }
 
-    private BigDecimal safeRelativeDelta(BigDecimal currentValue, BigDecimal previousValue) {
-        if (previousValue.compareTo(BigDecimal.ZERO) == 0) {
+    private BigDecimal calculateRelativeChangeOrZero(BigDecimal currentValue, BigDecimal previousValue) {
+        if (previousValue.signum() == 0) {
             return BigDecimal.ZERO;
         }
+
         return currentValue
                 .subtract(previousValue)
                 .divide(previousValue, KPI_SCALE, RoundingMode.HALF_UP);
     }
 
-    private TrendDirectionResponse determineTrend(BigDecimal deltaAbsolute) {
-        int cmp = deltaAbsolute.compareTo(BigDecimal.ZERO);
-        if (cmp > 0) {
+    private TrendDirectionResponse determineTrend(BigDecimal absoluteDelta) {
+        int comparison = absoluteDelta.compareTo(BigDecimal.ZERO);
+        if (comparison > 0) {
             return TrendDirectionResponse.UP;
         }
-        if (cmp < 0) {
+        if (comparison < 0) {
             return TrendDirectionResponse.DOWN;
         }
         return TrendDirectionResponse.FLAT;
