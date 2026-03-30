@@ -3,6 +3,8 @@ spring:
     name: dss-backend
   flyway:
     locations: classpath:db/migration/common
+    schemas: analytics
+    default-schema: analytics
 
 server:
   port: 8081
