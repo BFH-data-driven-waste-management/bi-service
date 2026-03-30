@@ -3,17 +3,17 @@ package ch.bfh.ddwm.dssbackend.dashboard.model;
 import java.math.BigDecimal;
 
 public record SystemDayAggregated(
-        long activeBinCount,
-        BigDecimal visits7dCurrent,
-        BigDecimal visits7dPrevious,
-        BigDecimal emptyings7dCurrent,
-        BigDecimal emptyings7dPrevious,
+        int activeBinCount,
+        int visits7dCurrent,
+        int visits7dPrevious,
+        int emptyings7dCurrent,
+        int emptyings7dPrevious,
         BigDecimal emptyingRate7dCurrent,
         BigDecimal emptyingRate7dPrevious,
         BigDecimal lowFillVisitShare90dCurrent,
         BigDecimal lowFillVisitShare90dPrevious,
         BigDecimal lowFillEmptyingShare90dCurrent,
         BigDecimal lowFillEmptyingShare90dPrevious,
-        BigDecimal overfullEvents30dCurrent,
-        BigDecimal overfullEvents30dPrevious
+        int overfullEvents30dCurrent,
+        int overfullEvents30dPrevious
 ) { }

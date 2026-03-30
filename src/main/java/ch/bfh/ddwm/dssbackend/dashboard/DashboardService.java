@@ -1,16 +1,17 @@
 package ch.bfh.ddwm.dssbackend.dashboard;
 
-import ch.bfh.ddwm.dssbackend.dashboard.dto.*;
-import ch.bfh.ddwm.dssbackend.dashboard.model.SystemDayAggregated;
+import ch.bfh.ddwm.dssbackend.dashboard.dto.CountOfBinTypeResponse;
+import ch.bfh.ddwm.dssbackend.dashboard.dto.DashboardResponse;
 import ch.bfh.ddwm.dssbackend.dashboard.dto.InstalledBinsResponse;
 import ch.bfh.ddwm.dssbackend.dashboard.dto.KpiMetricResponse;
 import ch.bfh.ddwm.dssbackend.dashboard.dto.TrendDirectionResponse;
+import ch.bfh.ddwm.dssbackend.dashboard.model.SystemDayAggregated;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.Optional;
+import java.util.List;
 
 @Service
 public class DashboardService {
@@ -24,8 +25,7 @@ public class DashboardService {
     }
 
     public DashboardResponse getDashboard() {
-        LocalDate today = LocalDate.now();
-        int todayDateKey = toDateKey(today);
+        int todayDateKey = toDateKey(LocalDate.now());
 
         Integer currentDateKey = repository.findLatestAvailableDateKey(todayDateKey);
         if (currentDateKey == null) {
@@ -38,31 +38,38 @@ public class DashboardService {
         int previous30DateKey = toDateKey(referenceDate.minusDays(30));
         int previous90DateKey = toDateKey(referenceDate.minusDays(90));
 
-        Optional<SystemDayAggregated> systemDayAggregated = repository.fetchDashboardRawData(
-                currentDateKey,
-                previous7DateKey,
-                previous30DateKey,
-                previous90DateKey
-        );
-
-        if (systemDayAggregated.isEmpty()) {
-            throw new IllegalStateException("No fact_system_day snapshot available for today");
-        }
+        SystemDayAggregated systemDayAggregated = repository.latestSystemDayAggregatedByPredecessor(
+                        currentDateKey,
+                        previous7DateKey,
+                        previous30DateKey,
+                        previous90DateKey
+                )
+                .orElseThrow(() -> new IllegalStateException("No fact_system_day snapshot available for today"));
 
         InstalledBinsResponse installedBins = new InstalledBinsResponse(
-                systemDayAggregated.get().activeBinCount(),
-                repository.findActiveBinCountByType()
+                systemDayAggregated.activeBinCount(),
+                mapCountOfBinTypes()
         );
 
         return new DashboardResponse(
                 installedBins,
-                buildMetric(systemDayAggregated.get().visits7dCurrent(), systemDayAggregated.get().visits7dPrevious()),
-                buildMetric(systemDayAggregated.get().emptyings7dCurrent(), systemDayAggregated.get().emptyings7dPrevious()),
-                buildMetric(systemDayAggregated.get().emptyingRate7dCurrent(), systemDayAggregated.get().emptyingRate7dPrevious()),
-                buildMetric(systemDayAggregated.get().lowFillVisitShare90dCurrent(), systemDayAggregated.get().lowFillVisitShare90dPrevious()),
-                buildMetric(systemDayAggregated.get().lowFillEmptyingShare90dCurrent(), systemDayAggregated.get().lowFillEmptyingShare90dPrevious()),
-                buildMetric(systemDayAggregated.get().overfullEvents30dCurrent(), systemDayAggregated.get().overfullEvents30dPrevious())
+                buildMetric(systemDayAggregated.visits7dCurrent(), systemDayAggregated.visits7dPrevious()),
+                buildMetric(systemDayAggregated.emptyings7dCurrent(), systemDayAggregated.emptyings7dPrevious()),
+                buildMetric(systemDayAggregated.emptyingRate7dCurrent(), systemDayAggregated.emptyingRate7dPrevious()),
+                buildMetric(systemDayAggregated.lowFillVisitShare90dCurrent(), systemDayAggregated.lowFillVisitShare90dPrevious()),
+                buildMetric(systemDayAggregated.lowFillEmptyingShare90dCurrent(), systemDayAggregated.lowFillEmptyingShare90dPrevious()),
+                buildMetric(systemDayAggregated.overfullEvents30dCurrent(), systemDayAggregated.overfullEvents30dPrevious())
         );
+    }
+
+    private List<CountOfBinTypeResponse> mapCountOfBinTypes() {
+        return repository.findActiveBinCountByType().stream()
+                .map(countOfBinType -> new CountOfBinTypeResponse(countOfBinType.type(), countOfBinType.count()))
+                .toList();
+    }
+
+    private KpiMetricResponse buildMetric(int currentValue, int previousValue) {
+        return buildMetric(BigDecimal.valueOf(currentValue), BigDecimal.valueOf(previousValue));
     }
 
     private KpiMetricResponse buildMetric(BigDecimal currentValue, BigDecimal previousValue) {
@@ -80,7 +87,7 @@ public class DashboardService {
     }
 
     private BigDecimal safeRelativeDelta(BigDecimal currentValue, BigDecimal previousValue) {
-        if (previousValue == null || previousValue.compareTo(BigDecimal.ZERO) == 0) {
+        if (previousValue.compareTo(BigDecimal.ZERO) == 0) {
             return BigDecimal.ZERO;
         }
         return currentValue

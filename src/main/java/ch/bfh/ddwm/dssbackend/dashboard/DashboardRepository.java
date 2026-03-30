@@ -13,7 +13,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-
 @Repository
 public class DashboardRepository {
 
@@ -26,7 +25,7 @@ public class DashboardRepository {
         this.dsl = dsl;
     }
 
-    public Optional<SystemDayAggregated> fetchDashboardRawData(
+    public Optional<SystemDayAggregated> latestSystemDayAggregatedByPredecessor(
             int currentDateKey,
             int previous7DateKey,
             int previous30DateKey,
@@ -37,27 +36,41 @@ public class DashboardRepository {
         var prev30 = FACT_SYSTEM_DAY.as("prev30");
         var prev90 = FACT_SYSTEM_DAY.as("prev90");
 
+        var activeBinCount = curr.ACTIVE_BIN_COUNT.as("active_bin_count");
+
+        var visits7dCurrent = curr.BIN_VISIT_COUNT_7D.as("visits_7d_current");
+        var visits7dPrevious = DSL.coalesce(prev7.BIN_VISIT_COUNT_7D, 0).as("visits_7d_previous");
+
+        var emptyings7dCurrent = curr.EMPTIED_VISIT_COUNT_7D.as("emptyings_7d_current");
+        var emptyings7dPrevious = DSL.coalesce(prev7.EMPTIED_VISIT_COUNT_7D, 0).as("emptyings_7d_previous");
+
+        var emptyingRate7dCurrent = curr.VISIT_EMPTIED_RATIO_7D.as("emptying_rate_7d_current");
+        var emptyingRate7dPrevious = DSL.coalesce(prev7.VISIT_EMPTIED_RATIO_7D, BigDecimal.ZERO).as("emptying_rate_7d_previous");
+
+        var lowFillVisitShare90dCurrent = curr.LOW_FILL_VISIT_RATIO_90D.as("low_fill_visit_share_90d_current");
+        var lowFillVisitShare90dPrevious = DSL.coalesce(prev90.LOW_FILL_VISIT_RATIO_90D, BigDecimal.ZERO).as("low_fill_visit_share_90d_previous");
+
+        var lowFillEmptyingShare90dCurrent = curr.LOW_FILL_EMPTIED_RATIO_90D.as("low_fill_emptying_share_90d_current");
+        var lowFillEmptyingShare90dPrevious = DSL.coalesce(prev90.LOW_FILL_EMPTIED_RATIO_90D, BigDecimal.ZERO).as("low_fill_emptying_share_90d_previous");
+
+        var overfullEvents30dCurrent = curr.OVERFULL_VISIT_30D.as("overfull_events_30d_current");
+        var overfullEvents30dPrevious = DSL.coalesce(prev30.OVERFULL_VISIT_30D, 0).as("overfull_events_30d_previous");
+
         var result = dsl
                 .select(
-                        curr.ACTIVE_BIN_COUNT,
-
-                        curr.BIN_VISIT_COUNT_7D,
-                        prev7.BIN_VISIT_COUNT_7D,
-
-                        curr.EMPTIED_VISIT_COUNT_7D,
-                        prev7.EMPTIED_VISIT_COUNT_7D,
-
-                        curr.VISIT_EMPTIED_RATIO_7D,
-                        prev7.VISIT_EMPTIED_RATIO_7D,
-
-                        curr.LOW_FILL_VISIT_RATIO_90D,
-                        prev90.LOW_FILL_VISIT_RATIO_90D,
-
-                        curr.LOW_FILL_EMPTIED_RATIO_90D,
-                        prev90.LOW_FILL_EMPTIED_RATIO_90D,
-
-                        curr.OVERFULL_VISIT_30D,
-                        prev30.OVERFULL_VISIT_30D
+                        activeBinCount,
+                        visits7dCurrent,
+                        visits7dPrevious,
+                        emptyings7dCurrent,
+                        emptyings7dPrevious,
+                        emptyingRate7dCurrent,
+                        emptyingRate7dPrevious,
+                        lowFillVisitShare90dCurrent,
+                        lowFillVisitShare90dPrevious,
+                        lowFillEmptyingShare90dCurrent,
+                        lowFillEmptyingShare90dPrevious,
+                        overfullEvents30dCurrent,
+                        overfullEvents30dPrevious
                 )
                 .from(curr)
                 .leftJoin(prev7).on(prev7.DATE_KEY.eq(previous7DateKey))
@@ -71,25 +84,19 @@ public class DashboardRepository {
         }
 
         return Optional.of(new SystemDayAggregated(
-                longValue(result.get(curr.ACTIVE_BIN_COUNT)),
-
-                decimalValue(result.get(curr.BIN_VISIT_COUNT_7D)),
-                decimalValue(result.get(prev7.BIN_VISIT_COUNT_7D)),
-
-                decimalValue(result.get(curr.EMPTIED_VISIT_COUNT_7D)),
-                decimalValue(result.get(prev7.EMPTIED_VISIT_COUNT_7D)),
-
-                decimalValue(result.get(curr.VISIT_EMPTIED_RATIO_7D)),
-                decimalValue(result.get(prev7.VISIT_EMPTIED_RATIO_7D)),
-
-                decimalValue(result.get(curr.LOW_FILL_VISIT_RATIO_90D)),
-                decimalValue(result.get(prev90.LOW_FILL_VISIT_RATIO_90D)),
-
-                decimalValue(result.get(curr.LOW_FILL_EMPTIED_RATIO_90D)),
-                decimalValue(result.get(prev90.LOW_FILL_EMPTIED_RATIO_90D)),
-
-                decimalValue(result.get(curr.OVERFULL_VISIT_30D)),
-                decimalValue(result.get(prev30.OVERFULL_VISIT_30D))
+                result.get(activeBinCount),
+                result.get(visits7dCurrent),
+                result.get(visits7dPrevious),
+                result.get(emptyings7dCurrent),
+                result.get(emptyings7dPrevious),
+                result.get(emptyingRate7dCurrent),
+                result.get(emptyingRate7dPrevious),
+                result.get(lowFillVisitShare90dCurrent),
+                result.get(lowFillVisitShare90dPrevious),
+                result.get(lowFillEmptyingShare90dCurrent),
+                result.get(lowFillEmptyingShare90dPrevious),
+                result.get(overfullEvents30dCurrent),
+                result.get(overfullEvents30dPrevious)
         ));
     }
 
@@ -114,13 +121,4 @@ public class DashboardRepository {
                 .where(FACT_SYSTEM_DAY.DATE_KEY.le(maxDateKeyInclusive))
                 .fetchOne(0, Integer.class);
     }
-
-    private BigDecimal decimalValue(Number value) {
-        return value != null ? BigDecimal.valueOf(value.doubleValue()) : BigDecimal.ZERO;
-    }
-
-    private long longValue(Number value) {
-        return value != null ? value.longValue() : 0L;
-    }
-
 }
