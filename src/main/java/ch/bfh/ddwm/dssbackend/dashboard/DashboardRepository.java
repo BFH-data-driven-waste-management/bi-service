@@ -1,6 +1,7 @@
 package ch.bfh.ddwm.dssbackend.dashboard;
 
 import ch.bfh.ddwm.dssbackend.dashboard.dto.BinTypeCountResponse;
+import ch.bfh.ddwm.dssbackend.dashboard.dto.DashboardRawData;
 import ch.bfh.ddwm.dssbackend.jooq.generated.Tables;
 import ch.bfh.ddwm.dssbackend.jooq.generated.tables.DimBin;
 import ch.bfh.ddwm.dssbackend.jooq.generated.tables.FactSystemDay;

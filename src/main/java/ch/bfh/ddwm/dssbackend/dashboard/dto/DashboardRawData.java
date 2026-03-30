@@ -1,4 +1,4 @@
-package ch.bfh.ddwm.dssbackend.dashboard;
+package ch.bfh.ddwm.dssbackend.dashboard.dto;
 
 import java.math.BigDecimal;
 
