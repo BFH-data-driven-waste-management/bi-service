@@ -25,7 +25,7 @@ public class DashboardRepository {
         this.dsl = dsl;
     }
 
-    public Optional<SystemDayAggregated> fetchDashboardRawData(
+    public Optional<SystemDayAggregated> latestSystemDayAggregatedByPredecessor(
             int currentDateKey,
             int previous7DateKey,
             int previous30DateKey,
