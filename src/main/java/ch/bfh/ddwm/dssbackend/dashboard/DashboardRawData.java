@@ -15,6 +15,5 @@ public record DashboardRawData(
         BigDecimal lowFillEmptyingShare90dCurrent,
         BigDecimal lowFillEmptyingShare90dPrevious,
         BigDecimal overfullEvents30dCurrent,
-        BigDecimal overfullEvents30dPrevious,
-        String byTypeJson
+        BigDecimal overfullEvents30dPrevious
 ) { }
