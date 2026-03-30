@@ -2,14 +2,8 @@ package ch.bfh.ddwm.dssbackend.tours;
 
 import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
 import ch.bfh.ddwm.dssbackend.jooq.generated.Tables;
-import ch.bfh.ddwm.dssbackend.jooq.generated.tables.DimAction;
-import ch.bfh.ddwm.dssbackend.jooq.generated.tables.DimBin;
-import ch.bfh.ddwm.dssbackend.jooq.generated.tables.DimFillLevel;
-import ch.bfh.ddwm.dssbackend.jooq.generated.tables.DimVehicle;
-import ch.bfh.ddwm.dssbackend.jooq.generated.tables.FactBinVisit;
-import ch.bfh.ddwm.dssbackend.jooq.generated.tables.FactTour;
+import ch.bfh.ddwm.dssbackend.jooq.generated.tables.*;
 import org.jooq.DSLContext;
-import org.jooq.Record7;
 import org.jooq.Record9;
 import org.springframework.stereotype.Repository;
 

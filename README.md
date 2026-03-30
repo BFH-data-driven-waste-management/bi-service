@@ -29,7 +29,8 @@ docker compose up -d # (or via IntelliJ with Docker plugin)
 ```
 
 #### 4) Start app
-Save IDE run configuration with active `dev` profile and start (or via CLI but less convenient).
+- Sync/Reload Maven if necessary 
+- Use IDE run configuration with active `dev` profile and start (most convenient).
 
 ### Windows
 
