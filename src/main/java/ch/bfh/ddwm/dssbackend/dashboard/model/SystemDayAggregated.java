@@ -1,8 +1,8 @@
-package ch.bfh.ddwm.dssbackend.dashboard;
+package ch.bfh.ddwm.dssbackend.dashboard.model;
 
 import java.math.BigDecimal;
 
-public record DashboardRawData(
+public record SystemDayAggregated(
         long activeBinCount,
         BigDecimal visits7dCurrent,
         BigDecimal visits7dPrevious,

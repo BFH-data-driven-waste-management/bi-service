@@ -1,6 +1,6 @@
 package ch.bfh.ddwm.dssbackend.dashboard.dto;
 
-public enum TrendDirection {
+public enum TrendDirectionResponse {
     UP,
     DOWN,
     FLAT

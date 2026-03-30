@@ -1,11 +1,16 @@
 package ch.bfh.ddwm.dssbackend.dashboard;
 
 import ch.bfh.ddwm.dssbackend.dashboard.dto.*;
+import ch.bfh.ddwm.dssbackend.dashboard.model.SystemDayAggregated;
+import ch.bfh.ddwm.dssbackend.dashboard.dto.InstalledBinsResponse;
+import ch.bfh.ddwm.dssbackend.dashboard.dto.KpiMetricResponse;
+import ch.bfh.ddwm.dssbackend.dashboard.dto.TrendDirectionResponse;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.Optional;
 
 @Service
 public class DashboardService {
@@ -33,33 +38,37 @@ public class DashboardService {
         int previous30DateKey = toDateKey(referenceDate.minusDays(30));
         int previous90DateKey = toDateKey(referenceDate.minusDays(90));
 
-        DashboardRawData raw = repository.fetchDashboardRawData(
+        Optional<SystemDayAggregated> systemDayAggregated = repository.fetchDashboardRawData(
                 currentDateKey,
                 previous7DateKey,
                 previous30DateKey,
                 previous90DateKey
         );
 
+        if (systemDayAggregated.isEmpty()) {
+            throw new IllegalStateException("No fact_system_day snapshot available for today");
+        }
+
         InstalledBinsResponse installedBins = new InstalledBinsResponse(
-                raw.activeBinCount(),
+                systemDayAggregated.get().activeBinCount(),
                 repository.findActiveBinCountByType()
         );
 
         return new DashboardResponse(
                 installedBins,
-                buildMetric(raw.visits7dCurrent(), raw.visits7dPrevious()),
-                buildMetric(raw.emptyings7dCurrent(), raw.emptyings7dPrevious()),
-                buildMetric(raw.emptyingRate7dCurrent(), raw.emptyingRate7dPrevious()),
-                buildMetric(raw.lowFillVisitShare90dCurrent(), raw.lowFillVisitShare90dPrevious()),
-                buildMetric(raw.lowFillEmptyingShare90dCurrent(), raw.lowFillEmptyingShare90dPrevious()),
-                buildMetric(raw.overfullEvents30dCurrent(), raw.overfullEvents30dPrevious())
+                buildMetric(systemDayAggregated.get().visits7dCurrent(), systemDayAggregated.get().visits7dPrevious()),
+                buildMetric(systemDayAggregated.get().emptyings7dCurrent(), systemDayAggregated.get().emptyings7dPrevious()),
+                buildMetric(systemDayAggregated.get().emptyingRate7dCurrent(), systemDayAggregated.get().emptyingRate7dPrevious()),
+                buildMetric(systemDayAggregated.get().lowFillVisitShare90dCurrent(), systemDayAggregated.get().lowFillVisitShare90dPrevious()),
+                buildMetric(systemDayAggregated.get().lowFillEmptyingShare90dCurrent(), systemDayAggregated.get().lowFillEmptyingShare90dPrevious()),
+                buildMetric(systemDayAggregated.get().overfullEvents30dCurrent(), systemDayAggregated.get().overfullEvents30dPrevious())
         );
     }
 
     private KpiMetricResponse buildMetric(BigDecimal currentValue, BigDecimal previousValue) {
         BigDecimal deltaAbsolute = currentValue.subtract(previousValue);
         BigDecimal deltaRelative = safeRelativeDelta(currentValue, previousValue);
-        TrendDirection trendDirection = determineTrend(deltaAbsolute);
+        TrendDirectionResponse trendDirection = determineTrend(deltaAbsolute);
 
         return new KpiMetricResponse(
                 scale(currentValue),
@@ -79,15 +88,15 @@ public class DashboardService {
                 .divide(previousValue, KPI_SCALE, RoundingMode.HALF_UP);
     }
 
-    private TrendDirection determineTrend(BigDecimal deltaAbsolute) {
+    private TrendDirectionResponse determineTrend(BigDecimal deltaAbsolute) {
         int cmp = deltaAbsolute.compareTo(BigDecimal.ZERO);
         if (cmp > 0) {
-            return TrendDirection.UP;
+            return TrendDirectionResponse.UP;
         }
         if (cmp < 0) {
-            return TrendDirection.DOWN;
+            return TrendDirectionResponse.DOWN;
         }
-        return TrendDirection.FLAT;
+        return TrendDirectionResponse.FLAT;
     }
 
     private BigDecimal scale(BigDecimal value) {
