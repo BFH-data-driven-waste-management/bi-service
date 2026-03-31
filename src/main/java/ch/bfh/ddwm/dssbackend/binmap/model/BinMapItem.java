@@ -1,12 +1,12 @@
-package ch.bfh.ddwm.dssbackend.bins.dto;
+package ch.bfh.ddwm.dssbackend.binmap.model;
 
 import java.math.BigDecimal;
 
-public record BinResponse(
+public record BinMapItem(
+        long binKey,
         String type,
         boolean isActive,
-        BigDecimal coordX2056,
-        BigDecimal coordY2056,
         BigDecimal coordX4326,
         BigDecimal coordY4326
-) { }
+) {
+}

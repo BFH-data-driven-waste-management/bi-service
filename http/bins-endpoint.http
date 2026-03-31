@@ -1,11 +1,11 @@
 ###
-GET http://localhost:8081/api/bins
+GET http://localhost:8081/api/bins/binmap
 Accept: application/json
 
 ###
-GET http://localhost:8081/api/bins/by-coordinates/4326?coordX=47.132004&coordY=7.246620
+GET http://localhost:8081/api/bins/binlist
 Accept: application/json
 
 ###
-GET http://localhost:8081/api/bins/by-coordinates/2056?coordX=2585432.37&coordY=1220131.54
+GET http://localhost:8081/api/bins/bindetails/1
 Accept: application/json
