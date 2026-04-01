@@ -34,8 +34,6 @@ public class BinDetailsService {
                 binDetails.binKey(),
                 binDetails.type(),
                 binDetails.volumeLiters(),
-                binDetails.zoneKey(),
-                binDetails.isActive(),
                 binDetails.coordX2056(),
                 binDetails.coordY2056(),
                 binDetails.coordX4326(),

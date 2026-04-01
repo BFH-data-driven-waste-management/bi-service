@@ -6,8 +6,6 @@ public record BinDetailsResponse(
         long binKey,
         String type,
         Integer volumeLiters,
-        long zoneKey,
-        boolean isActive,
         BigDecimal coordX2056,
         BigDecimal coordY2056,
         BigDecimal coordX4326,
