@@ -1,23 +1,21 @@
 package ch.bfh.ddwm.dssbackend.binlist;
 
 import ch.bfh.ddwm.dssbackend.bindetails.model.BinDetails;
-import ch.bfh.ddwm.dssbackend.bindetails.model.BinFeatureSnapshot;
+import ch.bfh.ddwm.dssbackend.bindetails.model.BinDayFeatures;
 import ch.bfh.ddwm.dssbackend.binlist.model.BinListItem;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.Tables;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimBin;
-import ch.bfh.ddwm.dssbackend.jooq.generated.analytics_derived.tables.BinDayFeatures;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Repository
 public class BinListRepository {
 
     private static final DimBin DIM_BIN = Tables.DIM_BIN;
-    private static final BinDayFeatures BIN_DAY_FEATURES = ch.bfh.ddwm.dssbackend.jooq.generated.analytics_derived.Tables.BIN_DAY_FEATURES;
+    private static final ch.bfh.ddwm.dssbackend.jooq.generated.analytics_derived.tables.BinDayFeatures BIN_DAY_FEATURES = ch.bfh.ddwm.dssbackend.jooq.generated.analytics_derived.Tables.BIN_DAY_FEATURES;
     private final DSLContext dsl;
 
     public BinListRepository(DSLContext dsl) {
@@ -63,7 +61,7 @@ public class BinListRepository {
                         record.get(DIM_BIN.COORD_Y_2056),
                         record.get(DIM_BIN.COORD_X_4326),
                         record.get(DIM_BIN.COORD_Y_4326),
-                        new BinFeatureSnapshot(
+                        new BinDayFeatures(
                                 record.get(BIN_DAY_FEATURES.BASELINE_AVG_VISITS_PER_WEEK_90D),
                                 record.get(BIN_DAY_FEATURES.BASELINE_AVG_EMPTYINGS_PER_WEEK_90D),
                                 record.get(BIN_DAY_FEATURES.LOW_FILL_VISIT_RATIO_90D),

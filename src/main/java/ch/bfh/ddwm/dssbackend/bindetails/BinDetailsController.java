@@ -16,8 +16,8 @@ public class BinDetailsController {
         this.service = service;
     }
 
-    @GetMapping("/{binKey}")
-    public BinDetailsResponse getBinDetails(@PathVariable long binKey) {
-        return service.getBinDetails(binKey);
+    @GetMapping("/{binId}")
+    public BinDetailsResponse getBinDetails(@PathVariable long binId) {
+        return service.getBinDetails(binId);
     }
 }

@@ -1,8 +1,8 @@
-package ch.bfh.ddwm.dssbackend.bindetails.model;
+package ch.bfh.ddwm.dssbackend.bindetails.dto;
 
 import java.math.BigDecimal;
 
-public record BinFeatureSnapshot(
+public record BinDayFeaturesResponse(
         BigDecimal baselineAvgVisitsPerWeek90d,
         BigDecimal baselineAvgEmptyingsPerWeek90d,
         BigDecimal lowFillVisitRatio90d,

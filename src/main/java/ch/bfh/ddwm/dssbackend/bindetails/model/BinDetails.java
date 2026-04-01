@@ -4,12 +4,15 @@ import java.math.BigDecimal;
 
 public record BinDetails(
         long binKey,
-        String type,
+        String binType,
         Integer volumeLiters,
+        boolean active,
         BigDecimal coordX2056,
         BigDecimal coordY2056,
         BigDecimal coordX4326,
         BigDecimal coordY4326,
-        BinFeatureSnapshot featureSnapshot
+        Integer lastVisitDateKey,
+        Integer lastEmptyingDateKey,
+        BinDayFeatures featureSnapshot
 ) {
 }
