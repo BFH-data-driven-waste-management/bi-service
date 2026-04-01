@@ -1,9 +1,9 @@
 package ch.bfh.ddwm.dssbackend.binmap;
 
 import ch.bfh.ddwm.dssbackend.binmap.model.BinMapItem;
-import ch.bfh.ddwm.dssbackend.jooq.generated.Tables;
-import ch.bfh.ddwm.dssbackend.jooq.generated.tables.DimBin;
-import ch.bfh.ddwm.dssbackend.jooq.generated.tables.FactBinDay;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.Tables;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimBin;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.FactBinDailySnapshot;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
@@ -14,7 +14,7 @@ import java.util.List;
 public class BinMapRepository {
 
     private static final DimBin DIM_BIN = Tables.DIM_BIN;
-    private static final FactBinDay FACT_BIN_DAY = Tables.FACT_BIN_DAY;
+    private static final FactBinDailySnapshot FACT_BIN_DAILY_SNAPSHOT = Tables.FACT_BIN_DAILY_SNAPSHOT;
 
     private final DSLContext dsl;
 
@@ -24,28 +24,28 @@ public class BinMapRepository {
 
     public Integer findLatestFactBinDayDateKey() {
         return dsl
-                .select(DSL.max(FACT_BIN_DAY.DATE_KEY))
-                .from(FACT_BIN_DAY)
+                .select(DSL.max(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY))
+                .from(FACT_BIN_DAILY_SNAPSHOT)
                 .fetchOne(0, Integer.class);
     }
 
     public List<BinMapItem> findBinMapByDateKey(int dateKey) {
         return dsl
                 .select(
-                        FACT_BIN_DAY.BIN_KEY,
+                        FACT_BIN_DAILY_SNAPSHOT.BIN_KEY,
                         DIM_BIN.BIN_TYPE,
-                        DIM_BIN.CURRENT_ACTIVE_FLAG,
+                        FACT_BIN_DAILY_SNAPSHOT.IS_ACTIVE,
                         DIM_BIN.COORD_X_4326,
                         DIM_BIN.COORD_Y_4326
                 )
-                .from(FACT_BIN_DAY)
-                .join(DIM_BIN).on(DIM_BIN.BIN_ID.eq(FACT_BIN_DAY.BIN_KEY))
-                .where(FACT_BIN_DAY.DATE_KEY.eq(dateKey))
-                .orderBy(FACT_BIN_DAY.BIN_KEY.asc())
+                .from(FACT_BIN_DAILY_SNAPSHOT)
+                .join(DIM_BIN).on(DIM_BIN.BIN_ID.eq(FACT_BIN_DAILY_SNAPSHOT.BIN_KEY))
+                .where(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY.eq(dateKey))
+                .orderBy(FACT_BIN_DAILY_SNAPSHOT.BIN_KEY.asc())
                 .fetch(record -> new BinMapItem(
-                        record.get(FACT_BIN_DAY.BIN_KEY),
+                        record.get(FACT_BIN_DAILY_SNAPSHOT.BIN_KEY),
                         record.get(DIM_BIN.BIN_TYPE),
-                        Boolean.TRUE.equals(record.get(DIM_BIN.CURRENT_ACTIVE_FLAG)),
+                        record.get(FACT_BIN_DAILY_SNAPSHOT.IS_ACTIVE),
                         record.get(DIM_BIN.COORD_X_4326),
                         record.get(DIM_BIN.COORD_Y_4326)
                 ));

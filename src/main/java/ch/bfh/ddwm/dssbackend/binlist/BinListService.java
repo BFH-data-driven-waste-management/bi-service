@@ -16,7 +16,7 @@ public class BinListService {
     }
 
     public List<BinListResponse> getBinList() {
-        Integer latestFactBinDayDateKey = repository.findLatestFactBinDayDateKey();
+        Integer latestFactBinDayDateKey = repository.findLatestBinDayFeaturesDateKey();
         if (latestFactBinDayDateKey == null) {
             throw new IllegalStateException("No fact_bin_day snapshots available");
         }
