@@ -28,7 +28,6 @@ public class BinListService {
                 .map(bin -> new BinListResponse(
                         bin.binKey(),
                         bin.type(),
-                        bin.isActive(),
                         bin.avgWeeklyVisits90d(),
                         bin.lowFillVisitRatio90d(),
                         bin.overfullVisitRatio90d()
