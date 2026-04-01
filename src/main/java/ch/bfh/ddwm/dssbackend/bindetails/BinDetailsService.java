@@ -53,10 +53,10 @@ public class BinDetailsService {
                         binDetails.featureSnapshot().heatSensitivityScore(),
                         binDetails.featureSnapshot().eventSensitivityScore()
                 ),
-                repository.findVisitFrequency90d(binId, todayMinus90dDateKey, todayDateKey).stream()
+                repository.findVisitFrequencyPerWeekInWindow(binId, todayMinus90dDateKey, todayDateKey).stream()
                         .map(point -> new DailyCountResponse(point.dateKey(), point.count()))
                         .toList(),
-                repository.findEmptyingFrequency90d(binId, todayMinus90dDateKey, todayDateKey).stream()
+                repository.findEmptyingFrequencyPerWeekInWindow(binId, todayMinus90dDateKey, todayDateKey).stream()
                         .map(point -> new DailyCountResponse(point.dateKey(), point.count()))
                         .toList(),
                 repository.findFillTrend12m(binId, todayMinus12mDateKey, todayDateKey).stream()

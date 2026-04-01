@@ -96,31 +96,41 @@ public class BinDetailsRepository {
                 });
     }
 
-    public List<DailyCountPoint> findVisitFrequency90d(long binId, int startDateKeyInclusive, int endDateKeyInclusive) {
+    public List<DailyCountPoint> findVisitFrequencyPerWeekInWindow(long binId, int startDateKeyInclusive, int endDateKeyInclusive) {
+        Field<Integer> weekStartDateKey = weekStartDateKey(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY);
+        Field<BigDecimal> averageVisitsPerWeek = DSL.avg(FACT_BIN_DAILY_SNAPSHOT.VISIT_COUNT.cast(BigDecimal.class))
+                .as("average_visits_per_week");
+
         return dsl
-                .select(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY, FACT_BIN_DAILY_SNAPSHOT.VISIT_COUNT.cast(BigDecimal.class))
+                .select(weekStartDateKey, averageVisitsPerWeek)
                 .from(FACT_BIN_DAILY_SNAPSHOT)
                 .join(DIM_BIN).on(DIM_BIN.BIN_KEY.eq(FACT_BIN_DAILY_SNAPSHOT.BIN_KEY))
                 .where(DIM_BIN.BIN_ID.eq(binId))
                 .and(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY.between(startDateKeyInclusive, endDateKeyInclusive))
-                .orderBy(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY.asc())
+                .groupBy(weekStartDateKey)
+                .orderBy(weekStartDateKey.asc())
                 .fetch(record -> new DailyCountPoint(
-                        record.get(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY),
-                        record.get(FACT_BIN_DAILY_SNAPSHOT.VISIT_COUNT.cast(BigDecimal.class))
+                        record.get(weekStartDateKey),
+                        record.get(averageVisitsPerWeek)
                 ));
     }
 
-    public List<DailyCountPoint> findEmptyingFrequency90d(long binId, int startDateKeyInclusive, int endDateKeyInclusive) {
+    public List<DailyCountPoint> findEmptyingFrequencyPerWeekInWindow(long binId, int startDateKeyInclusive, int endDateKeyInclusive) {
+        Field<Integer> weekStartDateKey = weekStartDateKey(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY);
+        Field<BigDecimal> averageEmptyingsPerWeek = DSL.avg(FACT_BIN_DAILY_SNAPSHOT.EMPTIED_VISIT_COUNT.cast(BigDecimal.class))
+                .as("average_emptyings_per_week");
+
         return dsl
-                .select(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY, FACT_BIN_DAILY_SNAPSHOT.EMPTIED_VISIT_COUNT.cast(BigDecimal.class))
+                .select(weekStartDateKey, averageEmptyingsPerWeek)
                 .from(FACT_BIN_DAILY_SNAPSHOT)
                 .join(DIM_BIN).on(DIM_BIN.BIN_KEY.eq(FACT_BIN_DAILY_SNAPSHOT.BIN_KEY))
                 .where(DIM_BIN.BIN_ID.eq(binId))
                 .and(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY.between(startDateKeyInclusive, endDateKeyInclusive))
-                .orderBy(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY.asc())
+                .groupBy(weekStartDateKey)
+                .orderBy(weekStartDateKey.asc())
                 .fetch(record -> new DailyCountPoint(
-                        record.get(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY),
-                        record.get(FACT_BIN_DAILY_SNAPSHOT.EMPTIED_VISIT_COUNT.cast(BigDecimal.class))
+                        record.get(weekStartDateKey),
+                        record.get(averageEmptyingsPerWeek)
                 ));
     }
 
@@ -157,5 +167,13 @@ public class BinDetailsRepository {
         java.time.LocalDate date = java.time.LocalDate.of(dateKey / 10_000, (dateKey % 10_000) / 100, dateKey % 100);
         java.time.LocalDate adjusted = date.minusDays(days);
         return adjusted.getYear() * 10_000 + adjusted.getMonthValue() * 100 + adjusted.getDayOfMonth();
+    }
+
+    private Field<Integer> weekStartDateKey(Field<Integer> dateKeyField) {
+        return DSL.field(
+                "CAST(to_char(date_trunc('week', to_date(CAST({0} AS text), 'YYYYMMDD')), 'YYYYMMDD') AS integer)",
+                Integer.class,
+                dateKeyField
+        );
     }
 }
