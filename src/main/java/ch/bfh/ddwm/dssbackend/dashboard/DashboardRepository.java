@@ -2,9 +2,10 @@ package ch.bfh.ddwm.dssbackend.dashboard;
 
 import ch.bfh.ddwm.dssbackend.dashboard.model.CountOfBinType;
 import ch.bfh.ddwm.dssbackend.dashboard.model.SystemDayAggregated;
-import ch.bfh.ddwm.dssbackend.jooq.generated.Tables;
-import ch.bfh.ddwm.dssbackend.jooq.generated.tables.DimBin;
-import ch.bfh.ddwm.dssbackend.jooq.generated.tables.FactSystemDay;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.Tables;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.FactBinDailySnapshot;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimBin;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics_derived.tables.SystemDaySummary;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
@@ -16,7 +17,8 @@ import java.util.Optional;
 @Repository
 public class DashboardRepository {
 
-    private static final FactSystemDay FACT_SYSTEM_DAY = Tables.FACT_SYSTEM_DAY;
+    private static final SystemDaySummary SYSTEM_DAY_SUMMARY = ch.bfh.ddwm.dssbackend.jooq.generated.analytics_derived.Tables.SYSTEM_DAY_SUMMARY;
+    private static final FactBinDailySnapshot FACT_BIN_DAILY_SNAPSHOT = Tables.FACT_BIN_DAILY_SNAPSHOT;
     private static final DimBin DIM_BIN = Tables.DIM_BIN;
 
     private final DSLContext dsl;
@@ -25,16 +27,16 @@ public class DashboardRepository {
         this.dsl = dsl;
     }
 
-    public Optional<SystemDayAggregated> latestSystemDayAggregatedByPredecessor(
+    public Optional<SystemDayAggregated> systemDaySummaryAggregatedByDate(
             int currentDateKey,
             int previous7DateKey,
             int previous30DateKey,
             int previous90DateKey
     ) {
-        var curr = FACT_SYSTEM_DAY.as("curr");
-        var prev7 = FACT_SYSTEM_DAY.as("prev7");
-        var prev30 = FACT_SYSTEM_DAY.as("prev30");
-        var prev90 = FACT_SYSTEM_DAY.as("prev90");
+        var curr = SYSTEM_DAY_SUMMARY.as("curr");
+        var prev7 = SYSTEM_DAY_SUMMARY.as("prev7");
+        var prev30 = SYSTEM_DAY_SUMMARY.as("prev30");
+        var prev90 = SYSTEM_DAY_SUMMARY.as("prev90");
 
         var activeBinCount = curr.ACTIVE_BIN_COUNT.as("active_bin_count");
 
@@ -100,25 +102,26 @@ public class DashboardRepository {
         ));
     }
 
-    public List<CountOfBinType> findActiveBinCountByType() {
+    public List<CountOfBinType> findActiveBinCountByTypeFilterByDate(int dateKey) {
         var countField = DSL.count().as("cnt");
         return dsl
                 .select(DIM_BIN.BIN_TYPE, countField)
-                .from(DIM_BIN)
-                .where(DIM_BIN.CURRENT_ACTIVE_FLAG.isTrue())
+                .from(FACT_BIN_DAILY_SNAPSHOT)
+                .join(DIM_BIN).on(DIM_BIN.BIN_KEY.eq(FACT_BIN_DAILY_SNAPSHOT.BIN_KEY))
+                .where(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY.eq(dateKey))
                 .groupBy(DIM_BIN.BIN_TYPE)
-                .orderBy(DIM_BIN.BIN_TYPE.asc())
-                .fetch(record -> new CountOfBinType(
-                        record.get(DIM_BIN.BIN_TYPE),
-                        record.get(countField) != null ? record.get(countField) : 0L
-                ));
+                .fetchInto(CountOfBinType.class);
+
+
+
     }
 
-    public Integer findLatestAvailableDateKey(int maxDateKeyInclusive) {
+    public boolean hasSystemSummaryForDate(int todayDateKey) {
         return dsl
-                .select(DSL.max(FACT_SYSTEM_DAY.DATE_KEY))
-                .from(FACT_SYSTEM_DAY)
-                .where(FACT_SYSTEM_DAY.DATE_KEY.le(maxDateKeyInclusive))
-                .fetchOne(0, Integer.class);
+                .fetchExists(
+                        dsl.selectOne()
+                                .from(SYSTEM_DAY_SUMMARY)
+                                .where(SYSTEM_DAY_SUMMARY.DATE_KEY.eq(todayDateKey))
+                );
     }
 }
