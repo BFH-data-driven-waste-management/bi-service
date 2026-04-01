@@ -3,7 +3,7 @@ spring:
     name: dss-backend
   flyway:
     locations: classpath:db/migration/common
-    schemas: analytics
+    schemas: analytics,analytics_derived
     default-schema: analytics
 
 server:

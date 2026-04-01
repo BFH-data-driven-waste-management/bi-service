@@ -36,13 +36,6 @@ CREATE TABLE dim_bin
     coord_y_2056                  NUMERIC(12, 2) NOT NULL,
     coord_x_4326                  NUMERIC(9, 6)  NOT NULL,
     coord_y_4326                  NUMERIC(9, 6)  NOT NULL,
-    zone_key                      BIGINT         NOT NULL,
-    current_active_flag           BOOLEAN        NOT NULL,
-    current_active_since_date_key INTEGER,
-    CONSTRAINT fk_dim_bin_zone
-        FOREIGN KEY (zone_key) REFERENCES dim_zone (zone_key),
-    CONSTRAINT fk_dim_bin_current_active_since_date
-        FOREIGN KEY (current_active_since_date_key) REFERENCES dim_date (date_key),
     CONSTRAINT chk_dim_bin_latitude
         CHECK (coord_x_4326 BETWEEN -90 AND 90),
     CONSTRAINT chk_dim_bin_longitude
@@ -112,7 +105,6 @@ CREATE TABLE fact_tour
     date_key                INTEGER     NOT NULL,
     started_at_ts           TIMESTAMPTZ NOT NULL,
     ended_at_ts             TIMESTAMPTZ NOT NULL CHECK (ended_at_ts >= started_at_ts),
-    duration_minutes        INTEGER CHECK (duration_minutes IS NULL OR duration_minutes >= 0),
     visit_count             INTEGER     NOT NULL CHECK (visit_count >= 0),
     emptied_visit_count     INTEGER     NOT NULL CHECK (emptied_visit_count >= 0),
     not_emptied_visit_count INTEGER     NOT NULL CHECK (not_emptied_visit_count >= 0),
@@ -168,7 +160,7 @@ CREATE TABLE fact_bin_visit
 CREATE TABLE fact_vehicle_emptying
 (
     vehicle_emptying_key   BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    tour_id                BIGINT,
+    tour_id                BIGINT      NOT NULL,
     sequence_in_tour       INTEGER     NOT NULL CHECK (sequence_in_tour >= 1),
     event_ts               TIMESTAMPTZ NOT NULL,
     date_key               INTEGER     NOT NULL,
@@ -184,12 +176,13 @@ CREATE TABLE fact_vehicle_emptying
         FOREIGN KEY (connectivity_state_key) REFERENCES dim_connectivity_state (connectivity_state_key)
 );
 
-CREATE TABLE fact_bin_day
+CREATE TABLE fact_bin_daily_snapshot
 (
     bin_day_key                  BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     date_key                     INTEGER NOT NULL,
     bin_key                      BIGINT  NOT NULL,
-    zone_key                     BIGINT  NOT NULL,
+    zone_key                     BIGINT,
+    -- as of the end of the day, could have been inactive during the day
     is_active                    BOOLEAN NOT NULL DEFAULT FALSE,
     visit_count                  INTEGER NOT NULL CHECK (visit_count >= 0),
     emptied_visit_count          INTEGER NOT NULL CHECK (emptied_visit_count >= 0),
@@ -204,28 +197,24 @@ CREATE TABLE fact_bin_day
     overfull_emptied_count       INTEGER NOT NULL DEFAULT 0 CHECK (overfull_emptied_count >= 0),
     last_observed_fill_level_key SMALLINT,
     max_observed_fill_level_key  SMALLINT,
-    days_since_last_visit        INTEGER CHECK (days_since_last_visit IS NULL OR days_since_last_visit >= 0),
-    days_since_last_emptying     INTEGER CHECK (days_since_last_emptying IS NULL OR days_since_last_emptying >= 0),
     event_affected_flag          BOOLEAN NOT NULL DEFAULT FALSE,
-    event_count                  INTEGER NOT NULL CHECK (event_count >= 0),
-    total_expected_people        INTEGER NOT NULL CHECK (total_expected_people >= 0),
     -- TODO: maybe add these later
     -- is_rainy_day BOOLEAN NOT NULL DEFAULT FALSE,
     -- is_hot_day BOOLEAN NOT NULL DEFAULT FALSE,
     -- is_sunny_day BOOLEAN NOT NULL DEFAULT FALSE,
 
-    CONSTRAINT fk_fact_bin_day_date
+    CONSTRAINT fk_fact_bin_daily_snapshot_date
         FOREIGN KEY (date_key) REFERENCES dim_date (date_key),
-    CONSTRAINT fk_fact_bin_day_bin
+    CONSTRAINT fk_fact_bin_daily_snapshot_bin
         FOREIGN KEY (bin_key) REFERENCES dim_bin (bin_key),
-    CONSTRAINT fk_fact_bin_day_zone
+    CONSTRAINT fk_fact_bin_daily_snapshot_zone
         FOREIGN KEY (zone_key) REFERENCES dim_zone (zone_key),
-    CONSTRAINT fk_fact_bin_day_last_fill
+    CONSTRAINT fk_fact_bin_daily_snapshot_last_fill
         FOREIGN KEY (last_observed_fill_level_key) REFERENCES dim_fill_level (fill_level_key),
-    CONSTRAINT fk_fact_bin_day_max_fill
+    CONSTRAINT fk_fact_bin_daily_snapshot_max_fill
         FOREIGN KEY (max_observed_fill_level_key) REFERENCES dim_fill_level (fill_level_key),
 
-    CONSTRAINT uq_fact_bin_day UNIQUE (date_key, bin_key)
+    CONSTRAINT uq_fact_bin_daily_snapshot UNIQUE (date_key, bin_key)
 );
 
 CREATE TABLE fact_bin_status_change
@@ -256,64 +245,12 @@ CREATE TABLE fact_weather_day
         FOREIGN KEY (date_key) REFERENCES dim_date (date_key)
 );
 
-CREATE TABLE fact_bin_feature_snapshot
-(
-    bin_feature_snapshot_key            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    date_key                            INTEGER NOT NULL,
-    bin_key                             BIGINT  NOT NULL,
-    baseline_avg_visits_per_week_90d    NUMERIC(8, 4),
-    baseline_avg_emptyings_per_week_90d NUMERIC(8, 4),
-    low_fill_visit_ratio_90d            NUMERIC(8, 4),
-    not_emptied_ratio_90d               NUMERIC(8, 4),
-    emptying_rank_90d                   INTEGER,
-    weather_sensitivity_score           NUMERIC(8, 4),
-    rain_sensitivity_score              NUMERIC(8, 4),
-    sun_sensitivity_score               NUMERIC(8, 4),
-    heat_sensitivity_score              NUMERIC(8, 4),
-    event_sensitivity_score             NUMERIC(8, 4),
-
-    CONSTRAINT fk_fact_bin_feature_snapshot_date
-        FOREIGN KEY (date_key) REFERENCES dim_date (date_key),
-    CONSTRAINT fk_fact_bin_feature_snapshot_bin
-        FOREIGN KEY (bin_key) REFERENCES dim_bin (bin_key),
-
-    CONSTRAINT uq_fact_bin_feature_snapshot UNIQUE (date_key, bin_key)
-);
-
-CREATE TABLE fact_system_day
-(
-    system_day_key             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    date_key                   INTEGER       NOT NULL UNIQUE,
-    active_bin_count           INTEGER       NOT NULL CHECK (active_bin_count >= 0),
-    visited_distinct_bin_count INTEGER       NOT NULL CHECK (visited_distinct_bin_count >= 0),
-    emptied_distinct_bin_count INTEGER       NOT NULL CHECK (emptied_distinct_bin_count >= 0),
-    bin_visit_count            INTEGER       NOT NULL CHECK (bin_visit_count >= 0),
-    emptied_visit_count        INTEGER       NOT NULL CHECK (emptied_visit_count >= 0),
-    vehicle_emptying_count     INTEGER       NOT NULL CHECK (vehicle_emptying_count >= 0),
-    low_fill_visit_count       INTEGER       NOT NULL CHECK (low_fill_visit_count >= 0),
-    low_fill_emptied_count     INTEGER       NOT NULL CHECK (low_fill_emptied_count >= 0),
-    high_fill_visit_count      INTEGER       NOT NULL CHECK (high_fill_visit_count >= 0),
-    high_fill_emptied_count    INTEGER       NOT NULL CHECK (high_fill_emptied_count >= 0),
-    overfull_visit_count       INTEGER       NOT NULL CHECK (overfull_visit_count >= 0),
-    overfull_emptied_count     INTEGER       NOT NULL CHECK (overfull_emptied_count >= 0),
-    bin_visit_count_7d         INTEGER       NOT NULL CHECK (bin_visit_count_7d >= 0),
-    emptied_visit_count_7d     INTEGER       NOT NULL CHECK (emptied_visit_count_7d >= 0),
-    visit_emptied_ratio_7d     NUMERIC(8, 4) NOT NULL,
-    low_fill_visit_ratio_90d   NUMERIC(8, 4) NOT NULL,
-    low_fill_emptied_ratio_90d NUMERIC(8, 4) NOT NULL,
-    overfull_visit_30d         INTEGER       NOT NULL CHECK (overfull_visit_30d >= 0),
-
-    CONSTRAINT fk_fact_system_day_date
-        FOREIGN KEY (date_key) REFERENCES dim_date (date_key)
-);
-
 CREATE TABLE fact_event_zone_day
 (
     event_zone_day_key BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     event_key          BIGINT  NOT NULL,
     zone_key           BIGINT  NOT NULL,
     date_key           INTEGER NOT NULL,
-    expected_people    INTEGER CHECK (expected_people IS NULL OR expected_people >= 0),
 
     CONSTRAINT fk_fact_event_zone_day_event
         FOREIGN KEY (event_key) REFERENCES dim_event (event_key),
@@ -328,9 +265,6 @@ CREATE TABLE fact_event_zone_day
 -- =========================================================
 -- indexes
 -- =========================================================
-
-CREATE INDEX idx_dim_bin_zone_key
-    ON dim_bin (zone_key);
 
 CREATE INDEX idx_fact_bin_visit_date_key
     ON fact_bin_visit (date_key);
@@ -362,23 +296,17 @@ CREATE INDEX idx_fact_vehicle_emptying_vehicle_key
 CREATE INDEX idx_fact_vehicle_emptying_tour_id
     ON fact_vehicle_emptying (tour_id);
 
-CREATE INDEX idx_fact_bin_day_date_key
-    ON fact_bin_day (date_key);
+CREATE INDEX idx_fact_bin_daily_snapshot_date_key
+    ON fact_bin_daily_snapshot (date_key);
 
-CREATE INDEX idx_fact_bin_day_bin_key
-    ON fact_bin_day (bin_key);
+CREATE INDEX idx_fact_bin_daily_snapshot_bin_key
+    ON fact_bin_daily_snapshot (bin_key);
 
-CREATE INDEX idx_fact_bin_day_zone_key
-    ON fact_bin_day (zone_key);
+CREATE INDEX idx_fact_bin_daily_snapshot_zone_key
+    ON fact_bin_daily_snapshot (zone_key);
 
 CREATE INDEX idx_fact_bin_status_change_date_key
     ON fact_bin_status_change (date_key);
 
 CREATE INDEX idx_fact_bin_status_change_bin_key
     ON fact_bin_status_change (bin_key);
-
-CREATE INDEX idx_fact_bin_feature_snapshot_date_key
-    ON fact_bin_feature_snapshot (date_key);
-
-CREATE INDEX idx_fact_bin_feature_snapshot_bin_key
-    ON fact_bin_feature_snapshot (bin_key);
