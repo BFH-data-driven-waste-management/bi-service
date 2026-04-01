@@ -15,17 +15,12 @@ public class BinDetailsService {
     }
 
     public BinDetailsResponse getBinDetails(long binKey) {
-        Integer latestFactBinDayDateKey = repository.findLatestFactBinDayDateKey();
+        Integer latestFactBinDayDateKey = repository.findLatestBinDayFeaturesDateKey();
         if (latestFactBinDayDateKey == null) {
             throw new IllegalStateException("No fact_bin_day snapshots available");
         }
 
-        Integer latestFeatureSnapshotDateKey = repository.findLatestFeatureSnapshotDateKey(latestFactBinDayDateKey);
-        if (latestFeatureSnapshotDateKey == null) {
-            throw new IllegalStateException("No fact_bin_feature_snapshot available up to latest fact_bin_day date");
-        }
-
-        BinDetails binDetails = repository.findBinDetailsByBinKeyAndDate(binKey, latestFeatureSnapshotDateKey);
+        BinDetails binDetails = repository.findBinDetailsByBinKeyAndDate(binKey, latestFactBinDayDateKey);
         if (binDetails == null) {
             throw new BinNotFoundException("No bin found for key " + binKey);
         }
