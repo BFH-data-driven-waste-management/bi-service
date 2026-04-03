@@ -8,6 +8,8 @@ public record BinListItem(
         boolean isActive,
         BigDecimal avgWeeklyVisits90d,
         BigDecimal lowFillVisitRatio90d,
-        BigDecimal overfullVisitRatio90d
+        BigDecimal overfullVisitRatio90d,
+        BigDecimal coordX2056,
+        BigDecimal coordY2056
 ) {
 }
