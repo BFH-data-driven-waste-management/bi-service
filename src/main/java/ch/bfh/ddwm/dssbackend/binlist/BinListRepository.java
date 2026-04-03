@@ -54,7 +54,7 @@ public class BinListRepository {
                 .where(BIN_DAY_FEATURES.DATE_KEY.eq(featureDateKey))
                 .and(BIN_DAY_FEATURES.BIN_KEY.eq(binKey))
                 .fetchOne(record -> new BinDetails(
-                        record.get(BIN_DAY_FEATURES.BIN_KEY),
+                        record.get(DIM_BIN.BIN_ID),
                         record.get(DIM_BIN.BIN_TYPE),
                         record.get(DIM_BIN.VOLUME_LITERS),
                         record.get(DIM_BIN.COORD_X_2056),

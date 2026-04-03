@@ -1,6 +1,7 @@
 package ch.bfh.ddwm.dssbackend.binlist;
 
 import ch.bfh.ddwm.dssbackend.binlist.dto.BinListResponse;
+import ch.bfh.ddwm.dssbackend.common.DateKeyHelper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -21,12 +22,11 @@ public class BinListService {
             throw new IllegalStateException("No fact_bin_day snapshots available");
         }
 
-        LocalDate latestDate = fromDateKey(latestFactBinDayDateKey);
-        int startDateKey = toDateKey(latestDate.minusDays(89));
+        LocalDate latestDate = DateKeyHelper.fromDateKey(latestFactBinDayDateKey);
+        int startDateKey = DateKeyHelper.toDateKey(latestDate.minusDays(89));
 
         return repository.findBinListByDateRange(startDateKey, latestFactBinDayDateKey).stream()
                 .map(bin -> new BinListResponse(
-                        bin.binKey(),
                         bin.type(),
                         bin.isActive(),
                         bin.avgWeeklyVisits90d(),
@@ -34,18 +34,5 @@ public class BinListService {
                         bin.overfullVisitRatio90d()
                 ))
                 .toList();
-    }
-
-    private int toDateKey(LocalDate date) {
-        return date.getYear() * 10_000
-                + date.getMonthValue() * 100
-                + date.getDayOfMonth();
-    }
-
-    private LocalDate fromDateKey(int dateKey) {
-        int year = dateKey / 10_000;
-        int month = (dateKey % 10_000) / 100;
-        int day = dateKey % 100;
-        return LocalDate.of(year, month, day);
     }
 }

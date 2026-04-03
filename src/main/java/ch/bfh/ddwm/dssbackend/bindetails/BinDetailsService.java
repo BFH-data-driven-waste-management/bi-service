@@ -31,7 +31,6 @@ public class BinDetailsService {
         int todayMinus12mDateKey = toDateKey(LocalDate.now().minusDays(12 * 30));
 
         return new BinDetailsResponse(
-                binDetails.binKey(),
                 binDetails.binId(),
                 binDetails.binType(),
                 binDetails.volumeLiters(),

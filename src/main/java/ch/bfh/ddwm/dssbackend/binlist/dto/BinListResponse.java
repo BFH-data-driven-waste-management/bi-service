@@ -3,7 +3,7 @@ package ch.bfh.ddwm.dssbackend.binlist.dto;
 import java.math.BigDecimal;
 
 public record BinListResponse(
-        long binKey,
+        long binId,
         String type,
         boolean isActive,
         BigDecimal avgWeeklyVisits90d,

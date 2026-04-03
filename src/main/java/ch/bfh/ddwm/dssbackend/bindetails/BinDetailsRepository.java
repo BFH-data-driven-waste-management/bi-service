@@ -71,7 +71,6 @@ public class BinDetailsRepository {
                     Integer daysSinceLastEmptying = record.get(BIN_DAY_FEATURES.DAYS_SINCE_LAST_EMPTYING);
 
                     return new BinDetails(
-                            record.get(DIM_BIN.BIN_KEY),
                             record.get(DIM_BIN.BIN_ID),
                             record.get(DIM_BIN.BIN_TYPE),
                             record.get(DIM_BIN.VOLUME_LITERS),
