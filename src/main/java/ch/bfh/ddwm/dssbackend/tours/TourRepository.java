@@ -1,8 +1,8 @@
 package ch.bfh.ddwm.dssbackend.tours;
 
 import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
-import ch.bfh.ddwm.dssbackend.jooq.generated.Tables;
-import ch.bfh.ddwm.dssbackend.jooq.generated.tables.*;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.Tables;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.*;
 import org.jooq.DSLContext;
 import org.jooq.Record9;
 import org.springframework.stereotype.Repository;

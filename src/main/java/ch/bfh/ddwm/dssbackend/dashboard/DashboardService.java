@@ -4,7 +4,6 @@ import ch.bfh.ddwm.dssbackend.dashboard.dto.CountOfBinTypeResponse;
 import ch.bfh.ddwm.dssbackend.dashboard.dto.DashboardResponse;
 import ch.bfh.ddwm.dssbackend.dashboard.dto.InstalledBinsResponse;
 import ch.bfh.ddwm.dssbackend.dashboard.dto.KpiMetricResponse;
-import ch.bfh.ddwm.dssbackend.dashboard.dto.TrendDirectionResponse;
 import ch.bfh.ddwm.dssbackend.dashboard.model.SystemDayAggregated;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +11,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
+
+import static ch.bfh.ddwm.dssbackend.common.DateKeyHelper.fromDateKey;
+import static ch.bfh.ddwm.dssbackend.common.DateKeyHelper.toDateKey;
 
 @Service
 public class DashboardService {
@@ -27,15 +29,14 @@ public class DashboardService {
     public DashboardResponse getDashboard() {
         int todayDateKey = toDateKey(LocalDate.now());
 
-        Integer currentDateKey = repository.findLatestAvailableDateKey(todayDateKey);
-        if (currentDateKey == null) {
+        if (repository.hasSystemSummaryForDate(todayDateKey)) {
             throw new IllegalStateException("No fact_system_day snapshot available up to today");
         }
 
-        LocalDate referenceDate = fromDateKey(currentDateKey);
+        LocalDate referenceDate = fromDateKey(todayDateKey);
 
-        SystemDayAggregated systemDayAggregated = repository.latestSystemDayAggregatedByPredecessor(
-                        currentDateKey,
+        SystemDayAggregated systemDayAggregated = repository.systemDaySummaryAggregatedByDate(
+                        todayDateKey,
                         toDateKey(referenceDate.minusDays(7)),
                         toDateKey(referenceDate.minusDays(30)),
                         toDateKey(referenceDate.minusDays(90))
@@ -66,7 +67,8 @@ public class DashboardService {
     }
 
     private List<CountOfBinTypeResponse> mapCountOfBinTypes() {
-        return repository.findActiveBinCountByType().stream()
+        var todayDateKey = toDateKey(LocalDate.now());
+        return repository.findActiveBinCountByTypeFilterByDate(todayDateKey).stream()
                 .map(countOfBinType -> new CountOfBinTypeResponse(countOfBinType.type(), countOfBinType.count()))
                 .toList();
     }
@@ -76,16 +78,11 @@ public class DashboardService {
     }
 
     private KpiMetricResponse buildDecimalMetric(BigDecimal currentValue, BigDecimal previousValue) {
-        BigDecimal absoluteDelta = currentValue.subtract(previousValue);
         BigDecimal relativeDelta = calculateRelativeChangeOrZero(currentValue, previousValue);
-        TrendDirectionResponse trendDirection = determineTrend(absoluteDelta);
 
         return new KpiMetricResponse(
                 scale(currentValue),
-                scale(previousValue),
-                scale(absoluteDelta),
-                scale(relativeDelta),
-                trendDirection
+                scale(relativeDelta)
         );
     }
 
@@ -99,31 +96,7 @@ public class DashboardService {
                 .divide(previousValue, KPI_SCALE, RoundingMode.HALF_UP);
     }
 
-    private TrendDirectionResponse determineTrend(BigDecimal absoluteDelta) {
-        int comparison = absoluteDelta.compareTo(BigDecimal.ZERO);
-        if (comparison > 0) {
-            return TrendDirectionResponse.UP;
-        }
-        if (comparison < 0) {
-            return TrendDirectionResponse.DOWN;
-        }
-        return TrendDirectionResponse.FLAT;
-    }
-
     private BigDecimal scale(BigDecimal value) {
         return value.setScale(KPI_SCALE, RoundingMode.HALF_UP);
-    }
-
-    private int toDateKey(LocalDate date) {
-        return date.getYear() * 10_000
-                + date.getMonthValue() * 100
-                + date.getDayOfMonth();
-    }
-
-    private LocalDate fromDateKey(int dateKey) {
-        int year = dateKey / 10_000;
-        int month = (dateKey % 10_000) / 100;
-        int day = dateKey % 100;
-        return LocalDate.of(year, month, day);
     }
 }

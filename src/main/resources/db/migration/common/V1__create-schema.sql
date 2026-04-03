@@ -1,1 +1,2 @@
 CREATE SCHEMA IF NOT EXISTS analytics;
+CREATE SCHEMA IF NOT EXISTS analytics_derived;

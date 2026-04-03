@@ -28,7 +28,8 @@
     </scm>
     <properties>
         <java.version>21</java.version>
-        <jooq.codegen.jdbc.url>jdbc:postgresql://localhost:5434/postgres</jooq.codegen.jdbc.url> <!-- TODO put in dev profile -->
+        <jooq.codegen.jdbc.url>jdbc:postgresql://localhost:5434/postgres
+        </jooq.codegen.jdbc.url> <!-- TODO put in dev profile -->
         <jooq.codegen.jdbc.user>postgres</jooq.codegen.jdbc.user>
         <jooq.codegen.jdbc.password>postgres</jooq.codegen.jdbc.password>
         <flyway.url>${jooq.codegen.jdbc.url}</flyway.url>
@@ -123,7 +124,14 @@
                     <generator>
                         <database>
                             <name>org.jooq.meta.postgres.PostgresDatabase</name>
-                            <inputSchema>analytics</inputSchema>
+                            <schemata>
+                                <schema>
+                                    <inputSchema>analytics</inputSchema>
+                                </schema>
+                                <schema>
+                                    <inputSchema>analytics_derived</inputSchema>
+                                </schema>
+                            </schemata>
                             <includes>.*</includes>
                         </database>
                         <target>
