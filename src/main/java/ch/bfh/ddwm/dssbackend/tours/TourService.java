@@ -1,6 +1,9 @@
 package ch.bfh.ddwm.dssbackend.tours;
 
 import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
+import ch.bfh.ddwm.dssbackend.tours.dto.BinVisitDTO;
+import ch.bfh.ddwm.dssbackend.tours.dto.TourDTO;
+import ch.bfh.ddwm.dssbackend.tours.model.Tour;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +19,33 @@ public class TourService {
         int normalizedPage = Math.max(pageable.getPageNumber(), 0);
         int normalizedSize = Math.max(pageable.getPageSize(), 1);
 
-        return tourRepository.findTours(normalizedPage, normalizedSize);
+        PageResponse<Tour> tours = tourRepository.findTours(normalizedPage, normalizedSize);
+
+        return new PageResponse<>(
+                tours.content().stream()
+                        .map(tour -> new TourDTO(
+                                tour.id(),
+                                tour.licensePlate(),
+                                tour.startedAt(),
+                                tour.endedAt(),
+                                tour.binVisits().stream()
+                                        .map(binVisit -> new BinVisitDTO(
+                                                binVisit.id(),
+                                                binVisit.sequenceInTour(),
+                                                binVisit.eventTimestamp(),
+                                                binVisit.visitAction(),
+                                                binVisit.fillLevel(),
+                                                binVisit.binCoordX(),
+                                                binVisit.binCoordY(),
+                                                binVisit.binType()
+                                        ))
+                                        .toList()
+                        ))
+                        .toList(),
+                tours.page(),
+                tours.size(),
+                tours.totalElements(),
+                tours.totalPages()
+        );
     }
 }
