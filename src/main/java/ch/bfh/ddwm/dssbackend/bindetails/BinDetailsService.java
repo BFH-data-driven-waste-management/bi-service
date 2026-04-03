@@ -32,6 +32,7 @@ public class BinDetailsService {
 
         return new BinDetailsResponse(
                 binDetails.binKey(),
+                binDetails.binId(),
                 binDetails.binType(),
                 binDetails.volumeLiters(),
                 binDetails.active(),

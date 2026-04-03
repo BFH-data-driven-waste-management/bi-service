@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 public record BinDetails(
         long binKey,
+        long binId,
         String binType,
         Integer volumeLiters,
         boolean active,
