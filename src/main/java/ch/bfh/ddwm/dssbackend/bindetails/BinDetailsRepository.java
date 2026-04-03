@@ -97,31 +97,25 @@ public class BinDetailsRepository {
     }
 
     public List<DailyCountPoint> findVisitFrequencyPerWeekInWindow(long binId, int startDateKeyInclusive, int endDateKeyInclusive) {
-        Field<Integer> weekStartDateKey = weekStartDateKey(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY);
-        Field<BigDecimal> averageVisitsPerWeek = DSL.avg(FACT_BIN_DAILY_SNAPSHOT.VISIT_COUNT.cast(BigDecimal.class))
-                .as("average_visits_per_week");
-
-        return dsl
-                .select(weekStartDateKey, averageVisitsPerWeek)
-                .from(FACT_BIN_DAILY_SNAPSHOT)
-                .join(DIM_BIN).on(DIM_BIN.BIN_KEY.eq(FACT_BIN_DAILY_SNAPSHOT.BIN_KEY))
-                .where(DIM_BIN.BIN_ID.eq(binId))
-                .and(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY.between(startDateKeyInclusive, endDateKeyInclusive))
-                .groupBy(weekStartDateKey)
-                .orderBy(weekStartDateKey.asc())
-                .fetch(record -> new DailyCountPoint(
-                        record.get(weekStartDateKey),
-                        record.get(averageVisitsPerWeek)
-                ));
+        return findFrequencyPerWeekInWindowOfField(binId, startDateKeyInclusive, endDateKeyInclusive, FACT_BIN_DAILY_SNAPSHOT.VISIT_COUNT);
     }
 
     public List<DailyCountPoint> findEmptyingFrequencyPerWeekInWindow(long binId, int startDateKeyInclusive, int endDateKeyInclusive) {
-        Field<Integer> weekStartDateKey = weekStartDateKey(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY);
-        Field<BigDecimal> averageEmptyingsPerWeek = DSL.avg(FACT_BIN_DAILY_SNAPSHOT.EMPTIED_VISIT_COUNT.cast(BigDecimal.class))
-                .as("average_emptyings_per_week");
+        return findFrequencyPerWeekInWindowOfField(binId, startDateKeyInclusive, endDateKeyInclusive, FACT_BIN_DAILY_SNAPSHOT.EMPTIED_VISIT_COUNT);
+    }
+
+
+    /*
+     * centralized logic for weekly averages over given window
+     * idea: group by custom Field<> which projects every date_key to its week's start date key
+     */
+    private List<DailyCountPoint> findFrequencyPerWeekInWindowOfField(long binId, int startDateKeyInclusive, int endDateKeyInclusive, Field<Integer> countField) {
+        Field<Integer> weekStartDateKey = weekStartDateKeyField(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY);
+        Field<BigDecimal> averageCountPerWeek = DSL.avg(countField.cast(BigDecimal.class))
+                .as("average_count_per_week");
 
         return dsl
-                .select(weekStartDateKey, averageEmptyingsPerWeek)
+                .select(weekStartDateKey, averageCountPerWeek)
                 .from(FACT_BIN_DAILY_SNAPSHOT)
                 .join(DIM_BIN).on(DIM_BIN.BIN_KEY.eq(FACT_BIN_DAILY_SNAPSHOT.BIN_KEY))
                 .where(DIM_BIN.BIN_ID.eq(binId))
@@ -130,7 +124,7 @@ public class BinDetailsRepository {
                 .orderBy(weekStartDateKey.asc())
                 .fetch(record -> new DailyCountPoint(
                         record.get(weekStartDateKey),
-                        record.get(averageEmptyingsPerWeek)
+                        record.get(averageCountPerWeek)
                 ));
     }
 
@@ -169,7 +163,7 @@ public class BinDetailsRepository {
         return adjusted.getYear() * 10_000 + adjusted.getMonthValue() * 100 + adjusted.getDayOfMonth();
     }
 
-    private Field<Integer> weekStartDateKey(Field<Integer> dateKeyField) {
+    private Field<Integer> weekStartDateKeyField(Field<Integer> dateKeyField) {
         return DSL.field(
                 "CAST(to_char(date_trunc('week', to_date(CAST({0} AS text), 'YYYYMMDD')), 'YYYYMMDD') AS integer)",
                 Integer.class,
