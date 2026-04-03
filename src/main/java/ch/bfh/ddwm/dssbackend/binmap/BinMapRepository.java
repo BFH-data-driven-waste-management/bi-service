@@ -32,22 +32,27 @@ public class BinMapRepository {
     public List<BinMapItem> findBinMapByDateKey(int dateKey) {
         return dsl
                 .select(
+                        DIM_BIN.BIN_ID,
                         FACT_BIN_DAILY_SNAPSHOT.BIN_KEY,
                         DIM_BIN.BIN_TYPE,
                         FACT_BIN_DAILY_SNAPSHOT.IS_ACTIVE,
                         DIM_BIN.COORD_X_4326,
-                        DIM_BIN.COORD_Y_4326
+                        DIM_BIN.COORD_Y_4326,
+                        DIM_BIN.COORD_X_2056,
+                        DIM_BIN.COORD_Y_2056
                 )
                 .from(FACT_BIN_DAILY_SNAPSHOT)
                 .join(DIM_BIN).on(DIM_BIN.BIN_ID.eq(FACT_BIN_DAILY_SNAPSHOT.BIN_KEY))
                 .where(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY.eq(dateKey))
                 .orderBy(FACT_BIN_DAILY_SNAPSHOT.BIN_KEY.asc())
                 .fetch(record -> new BinMapItem(
-                        record.get(FACT_BIN_DAILY_SNAPSHOT.BIN_KEY),
+                        record.get(DIM_BIN.BIN_ID),
                         record.get(DIM_BIN.BIN_TYPE),
                         record.get(FACT_BIN_DAILY_SNAPSHOT.IS_ACTIVE),
                         record.get(DIM_BIN.COORD_X_4326),
-                        record.get(DIM_BIN.COORD_Y_4326)
+                        record.get(DIM_BIN.COORD_Y_4326),
+                        record.get(DIM_BIN.COORD_X_2056),
+                        record.get(DIM_BIN.COORD_Y_2056)
                 ));
     }
 }

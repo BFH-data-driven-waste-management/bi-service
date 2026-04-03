@@ -3,6 +3,7 @@ package ch.bfh.ddwm.dssbackend.bindetails;
 import ch.bfh.ddwm.dssbackend.bindetails.model.BinDetails;
 import ch.bfh.ddwm.dssbackend.bindetails.model.BinDayFeatures;
 import ch.bfh.ddwm.dssbackend.bindetails.model.DailyCountPoint;
+import ch.bfh.ddwm.dssbackend.common.DateKeyHelper;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.Tables;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimBin;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimDate;
@@ -137,7 +138,7 @@ public class BinDetailsRepository {
                 .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("FULL"), BigDecimal.valueOf(0.83))
                 .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("HALF_FULL"), BigDecimal.valueOf(0.5))
                 .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("EMPTY_OR_ALMOST_EMPTY"), BigDecimal.valueOf(0.17))
-                .otherwise((BigDecimal) null);
+                .otherwise(BigDecimal.ZERO);
 
         Field<BigDecimal> avgFillScore = DSL.avg(fillScore).as("avg_fill_score");
 
@@ -158,9 +159,9 @@ public class BinDetailsRepository {
     }
 
     private int dateKeyMinusDays(int dateKey, int days) {
-        java.time.LocalDate date = java.time.LocalDate.of(dateKey / 10_000, (dateKey % 10_000) / 100, dateKey % 100);
+        java.time.LocalDate date = DateKeyHelper.fromDateKey(dateKey);
         java.time.LocalDate adjusted = date.minusDays(days);
-        return adjusted.getYear() * 10_000 + adjusted.getMonthValue() * 100 + adjusted.getDayOfMonth();
+        return DateKeyHelper.toDateKey(adjusted);
     }
 
     private Field<Integer> weekStartDateKeyField(Field<Integer> dateKeyField) {

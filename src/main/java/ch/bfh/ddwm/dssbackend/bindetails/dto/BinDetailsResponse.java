@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record BinDetailsResponse(
-        long binKey,
+        long binId,
         String binType,
         Integer volumeLiters,
         boolean active,

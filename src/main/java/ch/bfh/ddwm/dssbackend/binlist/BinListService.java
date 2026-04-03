@@ -1,10 +1,13 @@
 package ch.bfh.ddwm.dssbackend.binlist;
 
 import ch.bfh.ddwm.dssbackend.binlist.dto.BinListResponse;
+import ch.bfh.ddwm.dssbackend.binlist.model.BinListItem;
+import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
+import ch.bfh.ddwm.dssbackend.common.model.PageResult;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.util.List;
+import static ch.bfh.ddwm.dssbackend.common.DateKeyHelper.toDateKey;
 
 @Service
 public class BinListService {
@@ -15,37 +18,31 @@ public class BinListService {
         this.repository = repository;
     }
 
-    public List<BinListResponse> getBinList() {
-        Integer latestFactBinDayDateKey = repository.findLatestBinDayFeaturesDateKey();
-        if (latestFactBinDayDateKey == null) {
-            throw new IllegalStateException("No fact_bin_day snapshots available");
-        }
+    public PageResponse<BinListResponse> getBinList(Pageable pageable) {
+        int normalizedPage = Math.max(pageable.getPageNumber(), 0);
+        int normalizedSize = Math.max(pageable.getPageSize(), 1);
+        int todayDateKey = toDateKey(java.time.LocalDate.now());
 
-        LocalDate latestDate = fromDateKey(latestFactBinDayDateKey);
-        int startDateKey = toDateKey(latestDate.minusDays(89));
+        PageResult<BinListItem> page =
+                repository.findBinListByDateKey(todayDateKey, normalizedPage, normalizedSize);
 
-        return repository.findBinListByDateRange(startDateKey, latestFactBinDayDateKey).stream()
-                .map(bin -> new BinListResponse(
-                        bin.binKey(),
-                        bin.type(),
-                        bin.isActive(),
-                        bin.avgWeeklyVisits90d(),
-                        bin.lowFillVisitRatio90d(),
-                        bin.overfullVisitRatio90d()
-                ))
-                .toList();
-    }
-
-    private int toDateKey(LocalDate date) {
-        return date.getYear() * 10_000
-                + date.getMonthValue() * 100
-                + date.getDayOfMonth();
-    }
-
-    private LocalDate fromDateKey(int dateKey) {
-        int year = dateKey / 10_000;
-        int month = (dateKey % 10_000) / 100;
-        int day = dateKey % 100;
-        return LocalDate.of(year, month, day);
+        return new PageResponse<>(
+                page.content().stream()
+                        .map(bin -> new BinListResponse(
+                                bin.binId(),
+                                bin.type(),
+                                bin.isActive(),
+                                bin.avgWeeklyVisits90d(),
+                                bin.lowFillVisitRatio90d(),
+                                bin.overfullVisitRatio90d(),
+                                bin.coordX2056(),
+                                bin.coordY2056()
+                        ))
+                        .toList(),
+                page.page(),
+                page.size(),
+                page.totalElements(),
+                page.totalPages()
+        );
     }
 }

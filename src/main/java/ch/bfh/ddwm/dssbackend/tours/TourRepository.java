@@ -1,6 +1,6 @@
 package ch.bfh.ddwm.dssbackend.tours;
 
-import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
+import ch.bfh.ddwm.dssbackend.common.model.PageResult;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.Tables;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimAction;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimBin;
@@ -37,7 +37,7 @@ public class TourRepository {
         this.dsl = dsl;
     }
 
-    public PageResponse<Tour> findTours(int page, int size) {
+    public PageResult<Tour> findTours(int page, int size) {
         Long totalElementsValue = dsl.selectCount()
                 .from(FACT_TOUR)
                 .fetchOne(0, Long.class);
@@ -64,7 +64,7 @@ public class TourRepository {
 
         if (tours.isEmpty()) {
             int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / size);
-            return new PageResponse<>(List.of(), page, size, totalElements, totalPages);
+            return new PageResult<>(List.of(), page, size, totalElements, totalPages);
         }
 
         List<Long> tourIds = tours.stream().map(TourRow::tourId).toList();
@@ -81,7 +81,7 @@ public class TourRepository {
                 .toList();
 
         int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / size);
-        return new PageResponse<>(content, page, size, totalElements, totalPages);
+        return new PageResult<>(content, page, size, totalElements, totalPages);
     }
 
     private Map<Long, List<BinVisit>> fetchBinVisitsByTour(List<Long> tourIds) {

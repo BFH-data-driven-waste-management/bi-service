@@ -1,6 +1,7 @@
 package ch.bfh.ddwm.dssbackend.tours;
 
 import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
+import ch.bfh.ddwm.dssbackend.common.model.PageResult;
 import ch.bfh.ddwm.dssbackend.tours.dto.BinVisitDTO;
 import ch.bfh.ddwm.dssbackend.tours.dto.TourDTO;
 import ch.bfh.ddwm.dssbackend.tours.model.Tour;
@@ -19,7 +20,7 @@ public class TourService {
         int normalizedPage = Math.max(pageable.getPageNumber(), 0);
         int normalizedSize = Math.max(pageable.getPageSize(), 1);
 
-        PageResponse<Tour> tours = tourRepository.findTours(normalizedPage, normalizedSize);
+        PageResult<Tour> tours = tourRepository.findTours(normalizedPage, normalizedSize);
 
         return new PageResponse<>(
                 tours.content().stream()
