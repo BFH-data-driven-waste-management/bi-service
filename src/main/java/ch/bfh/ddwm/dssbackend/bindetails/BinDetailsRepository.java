@@ -137,7 +137,7 @@ public class BinDetailsRepository {
                 .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("FULL"), BigDecimal.valueOf(0.83))
                 .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("HALF_FULL"), BigDecimal.valueOf(0.5))
                 .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("EMPTY_OR_ALMOST_EMPTY"), BigDecimal.valueOf(0.17))
-                .otherwise((BigDecimal) null);
+                .otherwise(BigDecimal.ZERO);
 
         Field<BigDecimal> avgFillScore = DSL.avg(fillScore).as("avg_fill_score");
 
