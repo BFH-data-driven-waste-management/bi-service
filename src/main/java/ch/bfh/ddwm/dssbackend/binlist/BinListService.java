@@ -3,6 +3,7 @@ package ch.bfh.ddwm.dssbackend.binlist;
 import ch.bfh.ddwm.dssbackend.binlist.dto.BinListResponse;
 import ch.bfh.ddwm.dssbackend.binlist.model.BinListItem;
 import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
+import ch.bfh.ddwm.dssbackend.common.model.PageResult;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +23,7 @@ public class BinListService {
         int normalizedSize = Math.max(pageable.getPageSize(), 1);
         int todayDateKey = toDateKey(java.time.LocalDate.now());
 
-        PageResponse<BinListItem> page =
+        PageResult<BinListItem> page =
                 repository.findBinListByDateKey(todayDateKey, normalizedPage, normalizedSize);
 
         return new PageResponse<>(

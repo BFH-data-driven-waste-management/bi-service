@@ -1,6 +1,6 @@
 package ch.bfh.ddwm.dssbackend.binlist;
 
-import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
+import ch.bfh.ddwm.dssbackend.common.model.PageResult;
 import ch.bfh.ddwm.dssbackend.binlist.model.BinListItem;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.Tables;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimBin;
@@ -22,7 +22,7 @@ public class BinListRepository {
         this.dsl = dsl;
     }
 
-    public PageResponse<BinListItem> findBinListByDateKey(int dateKey, int page, int size) {
+    public PageResult<BinListItem> findBinListByDateKey(int dateKey, int page, int size) {
         List<BinListItem> content = dsl
                 .select(
                         DIM_BIN.BIN_ID,
@@ -56,7 +56,7 @@ public class BinListRepository {
 
         int totalElements = countTotalElements(dateKey);
         int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / size);
-        return new PageResponse<>(content, page, size, totalElements, totalPages);
+        return new PageResult<>(content, page, size, totalElements, totalPages);
     }
 
     private int countTotalElements(int dateKey) {
