@@ -22,11 +22,13 @@ public class BinMapService {
 
         return repository.findBinMapByDateKey(latestFactBinDayDateKey).stream()
                 .map(bin -> new BinMapResponse(
-                        bin.binKey(),
+                        bin.binId(),
                         bin.type(),
                         bin.isActive(),
                         bin.coordX4326(),
-                        bin.coordY4326()
+                        bin.coordY4326(),
+                        bin.coordX2056(),
+                        bin.coordY2056()
                 ))
                 .toList();
     }
