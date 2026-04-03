@@ -2,7 +2,14 @@ package ch.bfh.ddwm.dssbackend.tours;
 
 import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.Tables;
-import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.*;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimAction;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimBin;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimFillLevel;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimVehicle;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.FactBinVisit;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.FactTour;
+import ch.bfh.ddwm.dssbackend.tours.model.BinVisit;
+import ch.bfh.ddwm.dssbackend.tours.model.Tour;
 import org.jooq.DSLContext;
 import org.jooq.Record9;
 import org.springframework.stereotype.Repository;
@@ -30,7 +37,7 @@ public class TourRepository {
         this.dsl = dsl;
     }
 
-    public PageResponse<TourDTO> findTours(int page, int size) {
+    public PageResponse<Tour> findTours(int page, int size) {
         Long totalElementsValue = dsl.selectCount()
                 .from(FACT_TOUR)
                 .fetchOne(0, Long.class);
@@ -61,10 +68,10 @@ public class TourRepository {
         }
 
         List<Long> tourIds = tours.stream().map(TourRow::tourId).toList();
-        Map<Long, List<BinVisitDTO>> binVisitsByTourId = fetchBinVisitsByTour(tourIds);
+        Map<Long, List<BinVisit>> binVisitsByTourId = fetchBinVisitsByTour(tourIds);
 
-        List<TourDTO> content = tours.stream()
-                .map(tour -> new TourDTO(
+        List<Tour> content = tours.stream()
+                .map(tour -> new Tour(
                         tour.tourId(),
                         tour.licensePlate(),
                         tour.startedAt(),
@@ -77,8 +84,8 @@ public class TourRepository {
         return new PageResponse<>(content, page, size, totalElements, totalPages);
     }
 
-    private Map<Long, List<BinVisitDTO>> fetchBinVisitsByTour(List<Long> tourIds) {
-        Map<Long, List<BinVisitDTO>> binVisitsByTourId = new HashMap<>();
+    private Map<Long, List<BinVisit>> fetchBinVisitsByTour(List<Long> tourIds) {
+        Map<Long, List<BinVisit>> binVisitsByTourId = new HashMap<>();
 
         for (Record9<Long, Long, Integer, OffsetDateTime, String, String, BigDecimal, BigDecimal, String> row : dsl.select(
                         FACT_BIN_VISIT.TOUR_ID,
@@ -102,7 +109,7 @@ public class TourRepository {
                 .orderBy(FACT_BIN_VISIT.TOUR_ID.asc(), FACT_BIN_VISIT.SEQUENCE_IN_TOUR.asc())
                 .fetch()) {
             Long tourId = row.get(FACT_BIN_VISIT.TOUR_ID);
-            BinVisitDTO visit = new BinVisitDTO(
+            BinVisit visit = new BinVisit(
                     row.get(FACT_BIN_VISIT.BIN_VISIT_ID),
                     row.get(FACT_BIN_VISIT.SEQUENCE_IN_TOUR),
                     row.get(FACT_BIN_VISIT.EVENT_TS),

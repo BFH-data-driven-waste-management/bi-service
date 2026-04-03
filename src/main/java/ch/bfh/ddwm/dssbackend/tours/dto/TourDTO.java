@@ -1,4 +1,4 @@
-package ch.bfh.ddwm.dssbackend.tours;
+package ch.bfh.ddwm.dssbackend.tours.dto;
 
 import java.time.OffsetDateTime;
 import java.util.List;

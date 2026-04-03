@@ -1,6 +1,7 @@
 package ch.bfh.ddwm.dssbackend.tours;
 
 import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
+import ch.bfh.ddwm.dssbackend.tours.dto.TourDTO;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.CrossOrigin;
