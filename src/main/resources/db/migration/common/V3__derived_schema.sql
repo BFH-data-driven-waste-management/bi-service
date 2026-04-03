@@ -12,6 +12,8 @@ CREATE TABLE analytics_derived.bin_day_features
     baseline_avg_visits_per_week_90d    NUMERIC(8, 4),
     baseline_avg_emptyings_per_week_90d NUMERIC(8, 4),
     low_fill_visit_ratio_90d            NUMERIC(8, 4),
+    high_fill_visit_ratio_90d           NUMERIC(8, 4),
+    overfull_visit_ratio_90d            NUMERIC(8, 4),
     not_emptied_ratio_90d               NUMERIC(8, 4),
     emptying_rank_90d                   INTEGER,
     weather_sensitivity_score           NUMERIC(8, 4),
