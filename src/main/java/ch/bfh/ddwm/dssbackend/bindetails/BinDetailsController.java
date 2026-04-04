@@ -1,12 +1,10 @@
 package ch.bfh.ddwm.dssbackend.bindetails;
 
 import ch.bfh.ddwm.dssbackend.bindetails.dto.BinDetailsResponse;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:4200") // TODO move to central config
 @RequestMapping("/api/bins/bindetails")
 public class BinDetailsController {
 

@@ -6,7 +6,9 @@ import java.util.List;
 public record Tour(
         long id,
         String licensePlate,
+        Integer vehicleEmptyingCount,
         OffsetDateTime startedAt,
         OffsetDateTime endedAt,
+        List<VehicleEmptying> vehicleEmptyings,
         List<BinVisit> binVisits
 ) {}

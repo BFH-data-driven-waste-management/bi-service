@@ -4,6 +4,7 @@ import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
 import ch.bfh.ddwm.dssbackend.common.model.PageResult;
 import ch.bfh.ddwm.dssbackend.tours.dto.BinVisitDTO;
 import ch.bfh.ddwm.dssbackend.tours.dto.TourDTO;
+import ch.bfh.ddwm.dssbackend.tours.dto.VehicleEmptyingDTO;
 import ch.bfh.ddwm.dssbackend.tours.model.Tour;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,8 +28,16 @@ public class TourService {
                         .map(tour -> new TourDTO(
                                 tour.id(),
                                 tour.licensePlate(),
+                                tour.vehicleEmptyingCount(),
                                 tour.startedAt(),
                                 tour.endedAt(),
+                                tour.vehicleEmptyings().stream()
+                                        .map(vehicleEmptying -> new VehicleEmptyingDTO(
+                                                vehicleEmptying.id(),
+                                                vehicleEmptying.sequenceInTour(),
+                                                vehicleEmptying.eventTimestamp()
+                                        ))
+                                        .toList(),
                                 tour.binVisits().stream()
                                         .map(binVisit -> new BinVisitDTO(
                                                 binVisit.id(),
