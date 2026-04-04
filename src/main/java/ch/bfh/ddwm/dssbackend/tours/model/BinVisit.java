@@ -5,6 +5,7 @@ import java.time.OffsetDateTime;
 
 public record BinVisit(
         long id,
+        long binId,
         int sequenceInTour,
         OffsetDateTime eventTimestamp,
         String visitAction,

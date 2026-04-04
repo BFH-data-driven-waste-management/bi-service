@@ -2,10 +2,12 @@ package ch.bfh.ddwm.dssbackend.tours;
 
 import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
 import ch.bfh.ddwm.dssbackend.tours.dto.TourDTO;
+import ch.bfh.ddwm.dssbackend.tours.dto.TourOverviewDTO;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,7 +24,13 @@ public class TourController {
 
     // TODO review/verify whole endpoint
     @GetMapping
-    public PageResponse<TourDTO> getTours(@PageableDefault(size = 4) Pageable pageable) {
+    public PageResponse<TourOverviewDTO> getTours(@PageableDefault(size = 4) Pageable pageable) {
         return tourService.getTours(pageable);
+    }
+
+    // TODO review/verify whole endpoint
+    @GetMapping("/{tourId}")
+    public TourDTO getTourById(@PathVariable long tourId) {
+        return tourService.getTourById(tourId);
     }
 }

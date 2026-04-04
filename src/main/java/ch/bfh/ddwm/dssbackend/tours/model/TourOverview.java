@@ -3,15 +3,9 @@ package ch.bfh.ddwm.dssbackend.tours.model;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-public record Tour(
+public record TourOverview(
         long id,
         String licensePlate,
-        Integer visitCount,
-        Integer emptiedVisitCount,
-        Integer notEmptiedVisitCount,
-        Integer lowFillVisitCount,
-        Integer highFillVisitCount,
-        Integer overfullVisitCount,
         Integer vehicleEmptyingCount,
         OffsetDateTime startedAt,
         OffsetDateTime endedAt,
