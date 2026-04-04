@@ -20,6 +20,7 @@ public class TourController {
         this.tourService = tourService;
     }
 
+    // TODO review/verify whole endpoint
     @GetMapping
     public PageResponse<TourDTO> getTours(@PageableDefault(size = 4) Pageable pageable) {
         return tourService.getTours(pageable);
