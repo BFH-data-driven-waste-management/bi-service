@@ -7,6 +7,8 @@ import ch.bfh.ddwm.dssbackend.common.model.PageResult;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+
 import static ch.bfh.ddwm.dssbackend.common.DateKeyHelper.toDateKey;
 
 @Service
@@ -21,7 +23,7 @@ public class BinListService {
     public PageResponse<BinListResponse> getBinList(Pageable pageable) {
         int normalizedPage = Math.max(pageable.getPageNumber(), 0);
         int normalizedSize = Math.max(pageable.getPageSize(), 1);
-        int todayDateKey = toDateKey(java.time.LocalDate.now());
+        int todayDateKey = toDateKey(LocalDate.now());
 
         PageResult<BinListItem> page =
                 repository.findBinListByDateKey(todayDateKey, normalizedPage, normalizedSize);
