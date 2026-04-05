@@ -10,3 +10,6 @@ logging:
   level:
     org:
       springframework=DEBUG:
+
+dss:
+  reference-date: 2026-04-03

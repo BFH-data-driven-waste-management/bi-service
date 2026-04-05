@@ -3,7 +3,9 @@ package ch.bfh.ddwm.dssbackend.bindetails;
 import ch.bfh.ddwm.dssbackend.bindetails.dto.BinDetailsResponse;
 import ch.bfh.ddwm.dssbackend.bindetails.dto.BinDayFeaturesResponse;
 import ch.bfh.ddwm.dssbackend.bindetails.dto.DailyCountResponse;
+import ch.bfh.ddwm.dssbackend.bindetails.model.BinDayFeatures;
 import ch.bfh.ddwm.dssbackend.bindetails.model.BinDetails;
+import ch.bfh.ddwm.dssbackend.common.TodayDateProvider;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -15,13 +17,15 @@ import static ch.bfh.ddwm.dssbackend.common.KpiMetricCalculator.buildDecimalMetr
 public class BinDetailsService {
 
     private final BinDetailsRepository repository;
+    private final TodayDateProvider todayDateProvider;
 
-    public BinDetailsService(BinDetailsRepository repository) {
+    public BinDetailsService(BinDetailsRepository repository, TodayDateProvider todayDateProvider) {
         this.repository = repository;
+        this.todayDateProvider = todayDateProvider;
     }
 
     public BinDetailsResponse getBinDetails(long binId) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = todayDateProvider.today();
         int todayDateKey = toDateKey(today);
         int lastWeekDateKey = toDateKey(today.minusDays(7));
 
@@ -48,11 +52,11 @@ public class BinDetailsService {
                 new BinDayFeaturesResponse(
                         buildDecimalMetric(
                                 binDetails.featureSnapshot().baselineAvgVisitsPerWeek90d(),
-                                previousFeatureSnapshot.map(features -> features.baselineAvgVisitsPerWeek90d()).orElse(null)
+                                previousFeatureSnapshot.map(BinDayFeatures::baselineAvgVisitsPerWeek90d).orElse(null)
                         ),
                         buildDecimalMetric(
                                 binDetails.featureSnapshot().baselineAvgEmptyingsPerWeek90d(),
-                                previousFeatureSnapshot.map(features -> features.baselineAvgEmptyingsPerWeek90d()).orElse(null)
+                                previousFeatureSnapshot.map(BinDayFeatures::baselineAvgEmptyingsPerWeek90d).orElse(null)
                         ),
                         binDetails.featureSnapshot().lowFillVisitRatio90d(),
                         binDetails.featureSnapshot().notEmptiedRatio90d(),
