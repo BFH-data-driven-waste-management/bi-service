@@ -1,24 +1,22 @@
 package ch.bfh.ddwm.dssbackend.dashboard;
 
+import ch.bfh.ddwm.dssbackend.common.dto.KpiMetricResponse;
 import ch.bfh.ddwm.dssbackend.dashboard.dto.CountOfBinTypeResponse;
 import ch.bfh.ddwm.dssbackend.dashboard.dto.DashboardResponse;
 import ch.bfh.ddwm.dssbackend.dashboard.dto.InstalledBinsResponse;
-import ch.bfh.ddwm.dssbackend.dashboard.dto.KpiMetricResponse;
 import ch.bfh.ddwm.dssbackend.dashboard.model.SystemDayAggregated;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 
 import static ch.bfh.ddwm.dssbackend.common.DateKeyHelper.fromDateKey;
 import static ch.bfh.ddwm.dssbackend.common.DateKeyHelper.toDateKey;
+import static ch.bfh.ddwm.dssbackend.common.KpiMetricCalculator.buildDecimalMetric;
+import static ch.bfh.ddwm.dssbackend.common.KpiMetricCalculator.buildIntegerMetric;
 
 @Service
 public class DashboardService {
-
-    private static final int KPI_SCALE = 4;
 
     private final DashboardRepository repository;
 
@@ -29,8 +27,8 @@ public class DashboardService {
     public DashboardResponse getDashboard() {
         int todayDateKey = toDateKey(LocalDate.now());
 
-        if (repository.hasSystemSummaryForDate(todayDateKey)) {
-            throw new IllegalStateException("No fact_system_day snapshot available up to today");
+        if (!repository.hasSystemSummaryForDate(todayDateKey)) {
+            throw new IllegalStateException("No system_day_summary snapshot available up to today");
         }
 
         LocalDate referenceDate = fromDateKey(todayDateKey);
@@ -41,7 +39,7 @@ public class DashboardService {
                         toDateKey(referenceDate.minusDays(30)),
                         toDateKey(referenceDate.minusDays(90))
                 )
-                .orElseThrow(() -> new IllegalStateException("No fact_system_day snapshot available for today"));
+                .orElseThrow(() -> new IllegalStateException("No system_day_summary snapshot available for today"));
 
         InstalledBinsResponse installedBins = new InstalledBinsResponse(
                 systemDayAggregated.activeBinCount(),
@@ -73,30 +71,4 @@ public class DashboardService {
                 .toList();
     }
 
-    private KpiMetricResponse buildIntegerMetric(int currentValue, int previousValue) {
-        return buildDecimalMetric(BigDecimal.valueOf(currentValue), BigDecimal.valueOf(previousValue));
-    }
-
-    private KpiMetricResponse buildDecimalMetric(BigDecimal currentValue, BigDecimal previousValue) {
-        BigDecimal relativeDelta = calculateRelativeChangeOrZero(currentValue, previousValue);
-
-        return new KpiMetricResponse(
-                scale(currentValue),
-                scale(relativeDelta)
-        );
-    }
-
-    private BigDecimal calculateRelativeChangeOrZero(BigDecimal currentValue, BigDecimal previousValue) {
-        if (previousValue.signum() == 0) {
-            return BigDecimal.ZERO;
-        }
-
-        return currentValue
-                .subtract(previousValue)
-                .divide(previousValue, KPI_SCALE, RoundingMode.HALF_UP);
-    }
-
-    private BigDecimal scale(BigDecimal value) {
-        return value.setScale(KPI_SCALE, RoundingMode.HALF_UP);
-    }
 }

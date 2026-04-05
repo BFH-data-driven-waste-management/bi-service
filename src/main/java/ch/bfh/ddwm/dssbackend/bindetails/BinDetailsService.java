@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 
 import static ch.bfh.ddwm.dssbackend.common.DateKeyHelper.toDateKey;
+import static ch.bfh.ddwm.dssbackend.common.KpiMetricCalculator.buildDecimalMetric;
 
 @Service
 public class BinDetailsService {
@@ -20,15 +21,18 @@ public class BinDetailsService {
     }
 
     public BinDetailsResponse getBinDetails(long binId) {
-        int todayDateKey = toDateKey(LocalDate.now());
+        LocalDate today = LocalDate.now();
+        int todayDateKey = toDateKey(today);
+        int lastWeekDateKey = toDateKey(today.minusDays(7));
 
         BinDetails binDetails = repository.binDayFeaturesByBinIdAndDateKey(binId, todayDateKey);
         if (binDetails == null) {
             throw new IllegalStateException("No bin details found for bin " + binId + " at date_key " + todayDateKey);
         }
 
-        int todayMinus90dDateKey = toDateKey(LocalDate.now().minusDays(90));
-        int todayMinus12mDateKey = toDateKey(LocalDate.now().minusDays(12 * 30));
+        int todayMinus90dDateKey = toDateKey(today.minusDays(90));
+        int todayMinus12mDateKey = toDateKey(today.minusDays(12 * 30));
+        var previousFeatureSnapshot = repository.findFeatureSnapshotByBinIdAndDateKey(binId, lastWeekDateKey);
 
         return new BinDetailsResponse(
                 binDetails.binId(),
@@ -42,8 +46,14 @@ public class BinDetailsService {
                 binDetails.lastVisitDateKey(),
                 binDetails.lastEmptyingDateKey(),
                 new BinDayFeaturesResponse(
-                        binDetails.featureSnapshot().baselineAvgVisitsPerWeek90d(),
-                        binDetails.featureSnapshot().baselineAvgEmptyingsPerWeek90d(),
+                        buildDecimalMetric(
+                                binDetails.featureSnapshot().baselineAvgVisitsPerWeek90d(),
+                                previousFeatureSnapshot.map(features -> features.baselineAvgVisitsPerWeek90d()).orElse(null)
+                        ),
+                        buildDecimalMetric(
+                                binDetails.featureSnapshot().baselineAvgEmptyingsPerWeek90d(),
+                                previousFeatureSnapshot.map(features -> features.baselineAvgEmptyingsPerWeek90d()).orElse(null)
+                        ),
                         binDetails.featureSnapshot().lowFillVisitRatio90d(),
                         binDetails.featureSnapshot().notEmptiedRatio90d(),
                         binDetails.featureSnapshot().emptyingRank90d(),

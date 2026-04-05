@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class BinDetailsRepository {
@@ -95,6 +96,38 @@ public class BinDetailsRepository {
                             )
                     );
                 });
+    }
+
+    public Optional<BinDayFeatures> findFeatureSnapshotByBinIdAndDateKey(long binId, int dateKey) {
+        return dsl
+                .select(
+                        BIN_DAY_FEATURES.BASELINE_AVG_VISITS_PER_WEEK_90D,
+                        BIN_DAY_FEATURES.BASELINE_AVG_EMPTYINGS_PER_WEEK_90D,
+                        BIN_DAY_FEATURES.LOW_FILL_VISIT_RATIO_90D,
+                        BIN_DAY_FEATURES.NOT_EMPTIED_RATIO_90D,
+                        BIN_DAY_FEATURES.EMPTYING_RANK_90D,
+                        BIN_DAY_FEATURES.WEATHER_SENSITIVITY_SCORE,
+                        BIN_DAY_FEATURES.RAIN_SENSITIVITY_SCORE,
+                        BIN_DAY_FEATURES.SUN_SENSITIVITY_SCORE,
+                        BIN_DAY_FEATURES.HEAT_SENSITIVITY_SCORE,
+                        BIN_DAY_FEATURES.EVENT_SENSITIVITY_SCORE
+                )
+                .from(BIN_DAY_FEATURES)
+                .join(DIM_BIN).on(DIM_BIN.BIN_KEY.eq(BIN_DAY_FEATURES.BIN_KEY))
+                .where(BIN_DAY_FEATURES.DATE_KEY.eq(dateKey))
+                .and(DIM_BIN.BIN_ID.eq(binId))
+                .fetchOptional(record -> new BinDayFeatures(
+                        record.get(BIN_DAY_FEATURES.BASELINE_AVG_VISITS_PER_WEEK_90D),
+                        record.get(BIN_DAY_FEATURES.BASELINE_AVG_EMPTYINGS_PER_WEEK_90D),
+                        record.get(BIN_DAY_FEATURES.LOW_FILL_VISIT_RATIO_90D),
+                        record.get(BIN_DAY_FEATURES.NOT_EMPTIED_RATIO_90D),
+                        record.get(BIN_DAY_FEATURES.EMPTYING_RANK_90D),
+                        record.get(BIN_DAY_FEATURES.WEATHER_SENSITIVITY_SCORE),
+                        record.get(BIN_DAY_FEATURES.RAIN_SENSITIVITY_SCORE),
+                        record.get(BIN_DAY_FEATURES.SUN_SENSITIVITY_SCORE),
+                        record.get(BIN_DAY_FEATURES.HEAT_SENSITIVITY_SCORE),
+                        record.get(BIN_DAY_FEATURES.EVENT_SENSITIVITY_SCORE)
+                ));
     }
 
     public List<DailyCountPoint> findVisitFrequencyPerWeekInWindow(long binId, int startDateKeyInclusive, int endDateKeyInclusive) {

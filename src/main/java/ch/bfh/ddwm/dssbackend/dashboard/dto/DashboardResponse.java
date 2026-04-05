@@ -1,5 +1,7 @@
 package ch.bfh.ddwm.dssbackend.dashboard.dto;
 
+import ch.bfh.ddwm.dssbackend.common.dto.KpiMetricResponse;
+
 public record DashboardResponse(
     InstalledBinsResponse installedBins,
     KpiMetricResponse visits7d,

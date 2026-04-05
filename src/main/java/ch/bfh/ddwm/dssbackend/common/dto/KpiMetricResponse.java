@@ -1,8 +1,9 @@
-package ch.bfh.ddwm.dssbackend.dashboard.dto;
+package ch.bfh.ddwm.dssbackend.common.dto;
 
 import java.math.BigDecimal;
 
 public record KpiMetricResponse(
         BigDecimal value,
         BigDecimal deltaRelative
-) {}
+) {
+}
