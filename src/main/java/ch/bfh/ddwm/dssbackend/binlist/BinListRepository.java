@@ -1,6 +1,5 @@
 package ch.bfh.ddwm.dssbackend.binlist;
 
-import ch.bfh.ddwm.dssbackend.common.model.PageResult;
 import ch.bfh.ddwm.dssbackend.binlist.model.BinListItem;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.Tables;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimBin;
@@ -22,8 +21,8 @@ public class BinListRepository {
         this.dsl = dsl;
     }
 
-    public PageResult<BinListItem> findBinListByDateKey(int dateKey, int page, int size) {
-        List<BinListItem> content = dsl
+    public List<BinListItem> findBinListByDateKey(int dateKey) {
+        return dsl
                 .select(
                         DIM_BIN.BIN_ID,
                         DIM_BIN.BIN_TYPE,
@@ -41,8 +40,6 @@ public class BinListRepository {
                         .and(BIN_DAY_FEATURES.DATE_KEY.eq(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY)))
                 .where(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY.eq(dateKey))
                 .orderBy(DIM_BIN.BIN_ID.asc())
-                .limit(size)
-                .offset(page * size)
                 .fetch(record -> new BinListItem(
                         record.get(DIM_BIN.BIN_ID),
                         record.get(DIM_BIN.BIN_TYPE),
@@ -53,18 +50,5 @@ public class BinListRepository {
                         record.get(DIM_BIN.COORD_X_2056),
                         record.get(DIM_BIN.COORD_Y_2056)
                 ));
-
-        int totalElements = countTotalElements(dateKey);
-        int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / size);
-        return new PageResult<>(content, page, size, totalElements, totalPages);
-    }
-
-    private int countTotalElements(int dateKey) {
-        var totalElementsValue = dsl.selectCount()
-                .from(FACT_BIN_DAILY_SNAPSHOT)
-                .where(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY.eq(dateKey))
-                .fetchOne(0, Integer.class);
-
-        return totalElementsValue == null ? 0 : totalElementsValue;
     }
 }
