@@ -130,30 +130,29 @@ public class BinDetailsRepository {
     }
 
     public List<DailyCountPoint> findFillTrend12m(long binId, int startDateKeyInclusive, int endDateKeyInclusive) {
-        Field<Integer> monthStartDateKey = DSL.field("(({0} / 100) * 100) + 1", Integer.class, FACT_BIN_VISIT.DATE_KEY)
-                .as("month_start_date_key");
+        Field<Integer> weekStartDateKey = weekStartDateKeyField(FACT_BIN_VISIT.DATE_KEY);
 
         Field<BigDecimal> fillScore = DSL
-                .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("OVERFULL"), BigDecimal.ONE)
-                .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("FULL"), BigDecimal.valueOf(0.83))
-                .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("HALF_FULL"), BigDecimal.valueOf(0.5))
-                .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("EMPTY_OR_ALMOST_EMPTY"), BigDecimal.valueOf(0.17))
+                .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("OVERFULL"), BigDecimal.valueOf(0.875))
+                .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("FULL"), BigDecimal.valueOf(0.625))
+                .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("HALF_FULL"), BigDecimal.valueOf(0.375))
+                .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("EMPTY_OR_ALMOST_EMPTY"), BigDecimal.valueOf(0.125))
                 .otherwise(BigDecimal.ZERO);
 
         Field<BigDecimal> avgFillScore = DSL.avg(fillScore).as("avg_fill_score");
 
         return dsl
-                .select(monthStartDateKey, avgFillScore)
+                .select(weekStartDateKey, avgFillScore)
                 .from(FACT_BIN_VISIT)
                 .join(DIM_BIN).on(DIM_BIN.BIN_KEY.eq(FACT_BIN_VISIT.BIN_KEY))
                 .join(DIM_DATE).on(DIM_DATE.DATE_KEY.eq(FACT_BIN_VISIT.DATE_KEY))
                 .join(DIM_FILL_LEVEL).on(DIM_FILL_LEVEL.FILL_LEVEL_KEY.eq(FACT_BIN_VISIT.FILL_LEVEL_KEY))
                 .where(DIM_BIN.BIN_ID.eq(binId))
                 .and(FACT_BIN_VISIT.DATE_KEY.between(startDateKeyInclusive, endDateKeyInclusive))
-                .groupBy(monthStartDateKey)
-                .orderBy(monthStartDateKey.asc())
+                .groupBy(weekStartDateKey)
+                .orderBy(weekStartDateKey.asc())
                 .fetch(record -> new DailyCountPoint(
-                        record.get(monthStartDateKey),
+                        record.get(weekStartDateKey),
                         record.get(avgFillScore)
                 ));
     }
