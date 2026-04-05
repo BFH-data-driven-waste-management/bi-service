@@ -5,6 +5,7 @@ import ch.bfh.ddwm.dssbackend.dashboard.dto.CountOfBinTypeResponse;
 import ch.bfh.ddwm.dssbackend.dashboard.dto.DashboardResponse;
 import ch.bfh.ddwm.dssbackend.dashboard.dto.InstalledBinsResponse;
 import ch.bfh.ddwm.dssbackend.dashboard.model.SystemDayAggregated;
+import ch.bfh.ddwm.dssbackend.common.TodayDateProvider;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -19,13 +20,15 @@ import static ch.bfh.ddwm.dssbackend.common.KpiMetricCalculator.buildIntegerMetr
 public class DashboardService {
 
     private final DashboardRepository repository;
+    private final TodayDateProvider todayDateProvider;
 
-    public DashboardService(DashboardRepository repository) {
+    public DashboardService(DashboardRepository repository, TodayDateProvider todayDateProvider) {
         this.repository = repository;
+        this.todayDateProvider = todayDateProvider;
     }
 
     public DashboardResponse getDashboard() {
-        int todayDateKey = toDateKey(LocalDate.now());
+        int todayDateKey = toDateKey(todayDateProvider.today());
 
         if (!repository.hasSystemSummaryForDate(todayDateKey)) {
             throw new IllegalStateException("No system_day_summary snapshot available up to today");
@@ -65,7 +68,7 @@ public class DashboardService {
     }
 
     private List<CountOfBinTypeResponse> mapCountOfBinTypes() {
-        var todayDateKey = toDateKey(LocalDate.now());
+        var todayDateKey = toDateKey(todayDateProvider.today());
         return repository.findActiveBinCountByTypeFilterByDate(todayDateKey).stream()
                 .map(countOfBinType -> new CountOfBinTypeResponse(countOfBinType.type(), countOfBinType.count()))
                 .toList();

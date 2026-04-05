@@ -4,10 +4,9 @@ import ch.bfh.ddwm.dssbackend.binlist.dto.BinListResponse;
 import ch.bfh.ddwm.dssbackend.binlist.model.BinListItem;
 import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
 import ch.bfh.ddwm.dssbackend.common.model.PageResult;
+import ch.bfh.ddwm.dssbackend.common.TodayDateProvider;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
 
 import static ch.bfh.ddwm.dssbackend.common.DateKeyHelper.toDateKey;
 
@@ -15,15 +14,17 @@ import static ch.bfh.ddwm.dssbackend.common.DateKeyHelper.toDateKey;
 public class BinListService {
 
     private final BinListRepository repository;
+    private final TodayDateProvider todayDateProvider;
 
-    public BinListService(BinListRepository repository) {
+    public BinListService(BinListRepository repository, TodayDateProvider todayDateProvider) {
         this.repository = repository;
+        this.todayDateProvider = todayDateProvider;
     }
 
     public PageResponse<BinListResponse> getBinList(Pageable pageable) {
         int normalizedPage = Math.max(pageable.getPageNumber(), 0);
         int normalizedSize = Math.max(pageable.getPageSize(), 1);
-        int todayDateKey = toDateKey(LocalDate.now());
+        int todayDateKey = toDateKey(todayDateProvider.today());
 
         PageResult<BinListItem> page =
                 repository.findBinListByDateKey(todayDateKey, normalizedPage, normalizedSize);
