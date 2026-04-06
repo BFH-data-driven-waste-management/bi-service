@@ -28,14 +28,14 @@ CREATE TABLE dim_zone
 
 CREATE TABLE dim_bin
 (
-    bin_key                       BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    bin_id                        BIGINT         NOT NULL UNIQUE,
-    bin_type                      VARCHAR(128)   NOT NULL,
-    volume_liters                 INTEGER        NOT NULL CHECK (volume_liters > 0),
-    coord_x_2056                  NUMERIC(12, 2) NOT NULL,
-    coord_y_2056                  NUMERIC(12, 2) NOT NULL,
-    coord_x_4326                  NUMERIC(9, 6)  NOT NULL,
-    coord_y_4326                  NUMERIC(9, 6)  NOT NULL,
+    bin_key       BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    bin_id        BIGINT         NOT NULL UNIQUE,
+    bin_type      VARCHAR(128)   NOT NULL,
+    volume_liters INTEGER        NOT NULL CHECK (volume_liters > 0),
+    coord_x_2056  NUMERIC(12, 2) NOT NULL,
+    coord_y_2056  NUMERIC(12, 2) NOT NULL,
+    coord_x_4326  NUMERIC(9, 6)  NOT NULL,
+    coord_y_4326  NUMERIC(9, 6)  NOT NULL,
     CONSTRAINT chk_dim_bin_latitude
         CHECK (coord_x_4326 BETWEEN -90 AND 90),
     CONSTRAINT chk_dim_bin_longitude
@@ -117,10 +117,7 @@ CREATE TABLE fact_tour
         FOREIGN KEY (vehicle_key) REFERENCES dim_vehicle (vehicle_key),
 
     CONSTRAINT fk_fact_tour_date
-        FOREIGN KEY (date_key) REFERENCES dim_date (date_key),
-
-    CONSTRAINT chk_fact_tour_time_range
-        CHECK (ended_at_ts IS NULL OR ended_at_ts >= started_at_ts)
+        FOREIGN KEY (date_key) REFERENCES dim_date (date_key)
 );
 
 CREATE TABLE fact_bin_visit
@@ -178,7 +175,7 @@ CREATE TABLE fact_vehicle_emptying
 
 CREATE TABLE fact_bin_daily_snapshot
 (
-    bin_day_key                  BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    bin_daily_snapshot_key       BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     date_key                     INTEGER NOT NULL,
     bin_key                      BIGINT  NOT NULL,
     zone_key                     BIGINT,
@@ -198,10 +195,6 @@ CREATE TABLE fact_bin_daily_snapshot
     last_observed_fill_level_key SMALLINT,
     max_observed_fill_level_key  SMALLINT,
     event_affected_flag          BOOLEAN NOT NULL DEFAULT FALSE,
-    -- TODO: maybe add these later
-    -- is_rainy_day BOOLEAN NOT NULL DEFAULT FALSE,
-    -- is_hot_day BOOLEAN NOT NULL DEFAULT FALSE,
-    -- is_sunny_day BOOLEAN NOT NULL DEFAULT FALSE,
 
     CONSTRAINT fk_fact_bin_daily_snapshot_date
         FOREIGN KEY (date_key) REFERENCES dim_date (date_key),
@@ -310,3 +303,4 @@ CREATE INDEX idx_fact_bin_status_change_date_key
 
 CREATE INDEX idx_fact_bin_status_change_bin_key
     ON fact_bin_status_change (bin_key);
+
