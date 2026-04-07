@@ -22,13 +22,6 @@ public class BinMapRepository {
         this.dsl = dsl;
     }
 
-    public Integer findLatestFactBinDayDateKey() {
-        return dsl
-                .select(DSL.max(FACT_BIN_DAILY_SNAPSHOT.DATE_KEY))
-                .from(FACT_BIN_DAILY_SNAPSHOT)
-                .fetchOne(0, Integer.class);
-    }
-
     public List<BinMapItem> findBinMapByDateKey(int dateKey) {
         return dsl
                 .select(

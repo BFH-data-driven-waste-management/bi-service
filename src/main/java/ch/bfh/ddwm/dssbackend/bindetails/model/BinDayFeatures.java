@@ -8,10 +8,8 @@ public record BinDayFeatures(
         BigDecimal lowFillVisitRatio90d,
         BigDecimal notEmptiedRatio90d,
         Integer emptyingRank90d,
-        BigDecimal weatherSensitivityScore,
-        BigDecimal rainSensitivityScore,
-        BigDecimal sunSensitivityScore,
-        BigDecimal heatSensitivityScore,
+        BigDecimal goodWeatherSensitivityScore,
+        BigDecimal badWeatherSensitivityScore,
         BigDecimal eventSensitivityScore
 ) {
 }

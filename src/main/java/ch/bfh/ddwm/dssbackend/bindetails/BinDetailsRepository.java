@@ -1,13 +1,17 @@
 package ch.bfh.ddwm.dssbackend.bindetails;
 
 import ch.bfh.ddwm.dssbackend.bindetails.model.BinDetails;
+import ch.bfh.ddwm.dssbackend.bindetails.model.BinVisitHistory;
 import ch.bfh.ddwm.dssbackend.bindetails.model.BinDayFeatures;
 import ch.bfh.ddwm.dssbackend.bindetails.model.DailyCountPoint;
 import ch.bfh.ddwm.dssbackend.common.DateKeyHelper;
+import ch.bfh.ddwm.dssbackend.common.model.PageResult;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.Tables;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimAction;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimBin;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimDate;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimFillLevel;
+import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimVehicle;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.FactBinDailySnapshot;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.FactBinVisit;
 import org.jooq.DSLContext;
@@ -25,6 +29,8 @@ public class BinDetailsRepository {
     private static final DimBin DIM_BIN = Tables.DIM_BIN;
     private static final DimDate DIM_DATE = Tables.DIM_DATE;
     private static final DimFillLevel DIM_FILL_LEVEL = Tables.DIM_FILL_LEVEL;
+    private static final DimAction DIM_ACTION = Tables.DIM_ACTION;
+    private static final DimVehicle DIM_VEHICLE = Tables.DIM_VEHICLE;
     private static final FactBinDailySnapshot FACT_BIN_DAILY_SNAPSHOT = Tables.FACT_BIN_DAILY_SNAPSHOT;
     private static final FactBinVisit FACT_BIN_VISIT = Tables.FACT_BIN_VISIT;
     private static final ch.bfh.ddwm.dssbackend.jooq.generated.analytics_derived.tables.BinDayFeatures BIN_DAY_FEATURES =
@@ -54,10 +60,8 @@ public class BinDetailsRepository {
                         BIN_DAY_FEATURES.LOW_FILL_VISIT_RATIO_90D,
                         BIN_DAY_FEATURES.NOT_EMPTIED_RATIO_90D,
                         BIN_DAY_FEATURES.EMPTYING_RANK_90D,
-                        BIN_DAY_FEATURES.WEATHER_SENSITIVITY_SCORE,
-                        BIN_DAY_FEATURES.RAIN_SENSITIVITY_SCORE,
-                        BIN_DAY_FEATURES.SUN_SENSITIVITY_SCORE,
-                        BIN_DAY_FEATURES.HEAT_SENSITIVITY_SCORE,
+                        BIN_DAY_FEATURES.GOOD_WEATHER_SENSITIVITY_SCORE,
+                        BIN_DAY_FEATURES.BAD_WEATHER_SENSITIVITY_SCORE,
                         BIN_DAY_FEATURES.EVENT_SENSITIVITY_SCORE
                 )
                 .from(BIN_DAY_FEATURES)
@@ -88,10 +92,8 @@ public class BinDetailsRepository {
                                     record.get(BIN_DAY_FEATURES.LOW_FILL_VISIT_RATIO_90D),
                                     record.get(BIN_DAY_FEATURES.NOT_EMPTIED_RATIO_90D),
                                     record.get(BIN_DAY_FEATURES.EMPTYING_RANK_90D),
-                                    record.get(BIN_DAY_FEATURES.WEATHER_SENSITIVITY_SCORE),
-                                    record.get(BIN_DAY_FEATURES.RAIN_SENSITIVITY_SCORE),
-                                    record.get(BIN_DAY_FEATURES.SUN_SENSITIVITY_SCORE),
-                                    record.get(BIN_DAY_FEATURES.HEAT_SENSITIVITY_SCORE),
+                                    record.get(BIN_DAY_FEATURES.GOOD_WEATHER_SENSITIVITY_SCORE),
+                                    record.get(BIN_DAY_FEATURES.BAD_WEATHER_SENSITIVITY_SCORE),
                                     record.get(BIN_DAY_FEATURES.EVENT_SENSITIVITY_SCORE)
                             )
                     );
@@ -106,10 +108,8 @@ public class BinDetailsRepository {
                         BIN_DAY_FEATURES.LOW_FILL_VISIT_RATIO_90D,
                         BIN_DAY_FEATURES.NOT_EMPTIED_RATIO_90D,
                         BIN_DAY_FEATURES.EMPTYING_RANK_90D,
-                        BIN_DAY_FEATURES.WEATHER_SENSITIVITY_SCORE,
-                        BIN_DAY_FEATURES.RAIN_SENSITIVITY_SCORE,
-                        BIN_DAY_FEATURES.SUN_SENSITIVITY_SCORE,
-                        BIN_DAY_FEATURES.HEAT_SENSITIVITY_SCORE,
+                        BIN_DAY_FEATURES.GOOD_WEATHER_SENSITIVITY_SCORE,
+                        BIN_DAY_FEATURES.BAD_WEATHER_SENSITIVITY_SCORE,
                         BIN_DAY_FEATURES.EVENT_SENSITIVITY_SCORE
                 )
                 .from(BIN_DAY_FEATURES)
@@ -122,10 +122,8 @@ public class BinDetailsRepository {
                         record.get(BIN_DAY_FEATURES.LOW_FILL_VISIT_RATIO_90D),
                         record.get(BIN_DAY_FEATURES.NOT_EMPTIED_RATIO_90D),
                         record.get(BIN_DAY_FEATURES.EMPTYING_RANK_90D),
-                        record.get(BIN_DAY_FEATURES.WEATHER_SENSITIVITY_SCORE),
-                        record.get(BIN_DAY_FEATURES.RAIN_SENSITIVITY_SCORE),
-                        record.get(BIN_DAY_FEATURES.SUN_SENSITIVITY_SCORE),
-                        record.get(BIN_DAY_FEATURES.HEAT_SENSITIVITY_SCORE),
+                        record.get(BIN_DAY_FEATURES.GOOD_WEATHER_SENSITIVITY_SCORE),
+                        record.get(BIN_DAY_FEATURES.BAD_WEATHER_SENSITIVITY_SCORE),
                         record.get(BIN_DAY_FEATURES.EVENT_SENSITIVITY_SCORE)
                 ));
     }
@@ -188,6 +186,49 @@ public class BinDetailsRepository {
                         record.get(weekStartDateKey),
                         record.get(avgFillScore)
                 ));
+    }
+
+    public PageResult<BinVisitHistory> findBinVisitsByBinId(long binId, int page, int size) {
+        Long totalElementsValue = dsl.selectCount()
+                .from(FACT_BIN_VISIT)
+                .join(DIM_BIN).on(DIM_BIN.BIN_KEY.eq(FACT_BIN_VISIT.BIN_KEY))
+                .where(DIM_BIN.BIN_ID.eq(binId))
+                .fetchOne(0, Long.class);
+        long totalElements = totalElementsValue == null ? 0L : totalElementsValue;
+        int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / size);
+
+        List<BinVisitHistory> binVisits = dsl
+                .select(
+                        FACT_BIN_VISIT.BIN_VISIT_ID,
+                        DIM_BIN.BIN_ID,
+                        FACT_BIN_VISIT.TOUR_ID,
+                        FACT_BIN_VISIT.SEQUENCE_IN_TOUR,
+                        FACT_BIN_VISIT.EVENT_TS,
+                        DIM_FILL_LEVEL.FILL_LEVEL_CODE,
+                        DIM_ACTION.ACTION_CODE,
+                        DIM_VEHICLE.LICENSE_PLATE
+                )
+                .from(FACT_BIN_VISIT)
+                .join(DIM_BIN).on(DIM_BIN.BIN_KEY.eq(FACT_BIN_VISIT.BIN_KEY))
+                .join(DIM_FILL_LEVEL).on(DIM_FILL_LEVEL.FILL_LEVEL_KEY.eq(FACT_BIN_VISIT.FILL_LEVEL_KEY))
+                .join(DIM_ACTION).on(DIM_ACTION.ACTION_KEY.eq(FACT_BIN_VISIT.ACTION_KEY))
+                .join(DIM_VEHICLE).on(DIM_VEHICLE.VEHICLE_KEY.eq(FACT_BIN_VISIT.VEHICLE_KEY))
+                .where(DIM_BIN.BIN_ID.eq(binId))
+                .orderBy(FACT_BIN_VISIT.EVENT_TS.desc(), FACT_BIN_VISIT.BIN_VISIT_ID.desc())
+                .limit(size)
+                .offset(page * size)
+                .fetch(record -> new BinVisitHistory(
+                        record.get(FACT_BIN_VISIT.BIN_VISIT_ID),
+                        record.get(DIM_BIN.BIN_ID),
+                        record.get(FACT_BIN_VISIT.TOUR_ID),
+                        record.get(FACT_BIN_VISIT.SEQUENCE_IN_TOUR),
+                        record.get(FACT_BIN_VISIT.EVENT_TS),
+                        record.get(DIM_FILL_LEVEL.FILL_LEVEL_CODE),
+                        record.get(DIM_ACTION.ACTION_CODE),
+                        record.get(DIM_VEHICLE.LICENSE_PLATE)
+                ));
+
+        return new PageResult<>(binVisits, page, size, totalElements, totalPages);
     }
 
     private int dateKeyMinusDays(int dateKey, int days) {

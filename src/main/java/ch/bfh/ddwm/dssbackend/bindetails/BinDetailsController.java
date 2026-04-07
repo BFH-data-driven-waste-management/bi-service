@@ -1,6 +1,10 @@
 package ch.bfh.ddwm.dssbackend.bindetails;
 
 import ch.bfh.ddwm.dssbackend.bindetails.dto.BinDetailsResponse;
+import ch.bfh.ddwm.dssbackend.bindetails.dto.BinVisitHistoryResponse;
+import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,5 +21,13 @@ public class BinDetailsController {
     @GetMapping("/{binId}")
     public BinDetailsResponse getBinDetails(@PathVariable long binId) {
         return service.getBinDetails(binId);
+    }
+
+    @GetMapping("/{binId}/visits")
+    public PageResponse<BinVisitHistoryResponse> getBinVisits(
+            @PathVariable long binId,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        return service.getBinVisits(binId, pageable);
     }
 }
