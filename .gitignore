@@ -34,3 +34,4 @@ build/
 
 /src/main/resources/db/migration/dev/**.sql
 /src/main/resources/db/migration/dev/**.zip
+/src/main/resources/db/migration/dev/convert.ps1

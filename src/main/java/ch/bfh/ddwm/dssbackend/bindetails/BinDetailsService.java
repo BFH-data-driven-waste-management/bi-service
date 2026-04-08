@@ -2,10 +2,15 @@ package ch.bfh.ddwm.dssbackend.bindetails;
 
 import ch.bfh.ddwm.dssbackend.bindetails.dto.BinDetailsResponse;
 import ch.bfh.ddwm.dssbackend.bindetails.dto.BinDayFeaturesResponse;
+import ch.bfh.ddwm.dssbackend.bindetails.dto.BinVisitHistoryResponse;
 import ch.bfh.ddwm.dssbackend.bindetails.dto.DailyCountResponse;
+import ch.bfh.ddwm.dssbackend.bindetails.model.BinVisitHistory;
 import ch.bfh.ddwm.dssbackend.bindetails.model.BinDayFeatures;
 import ch.bfh.ddwm.dssbackend.bindetails.model.BinDetails;
+import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
+import ch.bfh.ddwm.dssbackend.common.model.PageResult;
 import ch.bfh.ddwm.dssbackend.common.TodayDateProvider;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -59,12 +64,11 @@ public class BinDetailsService {
                                 previousFeatureSnapshot.map(BinDayFeatures::baselineAvgEmptyingsPerWeek90d).orElse(null)
                         ),
                         binDetails.featureSnapshot().lowFillVisitRatio90d(),
+                        binDetails.featureSnapshot().overfullVisitRatio90d(),
                         binDetails.featureSnapshot().notEmptiedRatio90d(),
                         binDetails.featureSnapshot().emptyingRank90d(),
-                        binDetails.featureSnapshot().weatherSensitivityScore(),
-                        binDetails.featureSnapshot().rainSensitivityScore(),
-                        binDetails.featureSnapshot().sunSensitivityScore(),
-                        binDetails.featureSnapshot().heatSensitivityScore(),
+                        binDetails.featureSnapshot().goodWeatherSensitivityScore(),
+                        binDetails.featureSnapshot().badWeatherSensitivityScore(),
                         binDetails.featureSnapshot().eventSensitivityScore()
                 ),
                 repository.findVisitFrequencyPerWeekInWindow(binId, todayMinus90dDateKey, todayDateKey).stream()
@@ -76,6 +80,36 @@ public class BinDetailsService {
                 repository.findFillTrend12m(binId, todayMinus12mDateKey, todayDateKey).stream()
                         .map(point -> new DailyCountResponse(point.dateKey(), point.count()))
                         .toList()
+        );
+    }
+
+    public PageResponse<BinVisitHistoryResponse> getBinVisits(long binId, Pageable pageable) {
+        int normalizedPage = Math.max(pageable.getPageNumber(), 0);
+        int normalizedSize = Math.max(pageable.getPageSize(), 1);
+
+        PageResult<BinVisitHistory> binVisits = repository.findBinVisitsByBinId(binId, normalizedPage, normalizedSize);
+
+        return new PageResponse<>(
+                binVisits.content().stream()
+                        .map(this::toBinVisitHistoryResponse)
+                        .toList(),
+                binVisits.page(),
+                binVisits.size(),
+                binVisits.totalElements(),
+                binVisits.totalPages()
+        );
+    }
+
+    private BinVisitHistoryResponse toBinVisitHistoryResponse(BinVisitHistory binVisitHistory) {
+        return new BinVisitHistoryResponse(
+                binVisitHistory.binVisitId(),
+                binVisitHistory.binId(),
+                binVisitHistory.tourId(),
+                binVisitHistory.sequenceInTour(),
+                binVisitHistory.eventTimestamp(),
+                binVisitHistory.fillLevelCode(),
+                binVisitHistory.actionCode(),
+                binVisitHistory.licensePlate()
         );
     }
 }
