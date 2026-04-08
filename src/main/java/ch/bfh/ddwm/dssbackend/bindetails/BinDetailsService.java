@@ -64,6 +64,7 @@ public class BinDetailsService {
                                 previousFeatureSnapshot.map(BinDayFeatures::baselineAvgEmptyingsPerWeek90d).orElse(null)
                         ),
                         binDetails.featureSnapshot().lowFillVisitRatio90d(),
+                        binDetails.featureSnapshot().overfullVisitRatio90d(),
                         binDetails.featureSnapshot().notEmptiedRatio90d(),
                         binDetails.featureSnapshot().emptyingRank90d(),
                         binDetails.featureSnapshot().goodWeatherSensitivityScore(),
