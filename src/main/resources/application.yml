@@ -1,6 +1,6 @@
 spring:
   application:
-    name: dss-backend
+    name: dss-service
   flyway:
     locations: classpath:db/migration/common
     schemas: analytics,analytics_derived
