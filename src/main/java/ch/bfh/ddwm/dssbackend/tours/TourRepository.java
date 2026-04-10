@@ -4,9 +4,7 @@ import ch.bfh.ddwm.dssbackend.common.model.PageResult;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.Tables;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.*;
 import ch.bfh.ddwm.dssbackend.tours.model.*;
-import org.jooq.DSLContext;
-import org.jooq.Record10;
-import org.jooq.Record4;
+import org.jooq.*;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -36,26 +34,7 @@ public class TourRepository {
                 .fetchOne(0, Long.class);
         long totalElements = totalElementsValue == null ? 0L : totalElementsValue;
 
-        List<TourOverviewRow> tours = dsl.select(
-                        FACT_TOUR.TOUR_ID,
-                        DIM_VEHICLE.LICENSE_PLATE,
-                        FACT_TOUR.VEHICLE_EMPTYING_COUNT,
-                        FACT_TOUR.STARTED_AT_TS,
-                        FACT_TOUR.ENDED_AT_TS
-                )
-                .from(FACT_TOUR)
-                .join(DIM_VEHICLE)
-                .on(DIM_VEHICLE.VEHICLE_KEY.eq(FACT_TOUR.VEHICLE_KEY))
-                .orderBy(FACT_TOUR.STARTED_AT_TS.desc(), FACT_TOUR.TOUR_ID.desc())
-                .limit(size)
-                .offset(page * size)
-                .fetch(record -> new TourOverviewRow(
-                        record.get(FACT_TOUR.TOUR_ID),
-                        record.get(DIM_VEHICLE.LICENSE_PLATE),
-                        record.get(FACT_TOUR.VEHICLE_EMPTYING_COUNT),
-                        record.get(FACT_TOUR.STARTED_AT_TS),
-                        record.get(FACT_TOUR.ENDED_AT_TS)
-                ));
+        List<TourOverviewRow> tours = mapTourOverviewRows(tourOverviewBaseQuery().limit(size).offset(page * size));
 
         if (tours.isEmpty()) {
             int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / size);
@@ -68,24 +47,7 @@ public class TourRepository {
 
 
     public List<TourOverviewRow> findAllTours() {
-        List<TourOverviewRow> tours = dsl.select(
-                        FACT_TOUR.TOUR_ID,
-                        DIM_VEHICLE.LICENSE_PLATE,
-                        FACT_TOUR.VEHICLE_EMPTYING_COUNT,
-                        FACT_TOUR.STARTED_AT_TS,
-                        FACT_TOUR.ENDED_AT_TS
-                )
-                .from(FACT_TOUR)
-                .join(DIM_VEHICLE)
-                .on(DIM_VEHICLE.VEHICLE_KEY.eq(FACT_TOUR.VEHICLE_KEY))
-                .orderBy(FACT_TOUR.STARTED_AT_TS.desc(), FACT_TOUR.TOUR_ID.desc())
-                .fetch(record -> new TourOverviewRow(
-                        record.get(FACT_TOUR.TOUR_ID),
-                        record.get(DIM_VEHICLE.LICENSE_PLATE),
-                        record.get(FACT_TOUR.VEHICLE_EMPTYING_COUNT),
-                        record.get(FACT_TOUR.STARTED_AT_TS),
-                        record.get(FACT_TOUR.ENDED_AT_TS)
-                ));
+        List<TourOverviewRow> tours = mapTourOverviewRows(tourOverviewBaseQuery());
 
         return tours.isEmpty() ? Collections.emptyList() : tours;
     }
@@ -172,6 +134,30 @@ public class TourRepository {
                         binVisitsByTourId.getOrDefault(tour.tourId(), List.of())
                 ))
                 .toList();
+    }
+
+    private SelectLimitStep<Record5<Long, String, Integer, OffsetDateTime, OffsetDateTime>> tourOverviewBaseQuery() {
+        return dsl.select(
+                        FACT_TOUR.TOUR_ID,
+                        DIM_VEHICLE.LICENSE_PLATE,
+                        FACT_TOUR.VEHICLE_EMPTYING_COUNT,
+                        FACT_TOUR.STARTED_AT_TS,
+                        FACT_TOUR.ENDED_AT_TS
+                )
+                .from(FACT_TOUR)
+                .join(DIM_VEHICLE)
+                .on(DIM_VEHICLE.VEHICLE_KEY.eq(FACT_TOUR.VEHICLE_KEY))
+                .orderBy(FACT_TOUR.STARTED_AT_TS.desc(), FACT_TOUR.TOUR_ID.desc());
+    }
+
+    private List<TourOverviewRow> mapTourOverviewRows(ResultQuery<Record5<Long, String, Integer, OffsetDateTime, OffsetDateTime>> query) {
+        return query.fetch(record -> new TourOverviewRow(
+                record.get(FACT_TOUR.TOUR_ID),
+                record.get(DIM_VEHICLE.LICENSE_PLATE),
+                record.get(FACT_TOUR.VEHICLE_EMPTYING_COUNT),
+                record.get(FACT_TOUR.STARTED_AT_TS),
+                record.get(FACT_TOUR.ENDED_AT_TS)
+        ));
     }
 
     private Map<Long, List<VehicleEmptying>> fetchVehicleEmptyingsByTour(List<Long> tourIds) {
