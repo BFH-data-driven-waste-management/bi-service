@@ -10,10 +10,15 @@ import ch.bfh.ddwm.dssbackend.bindetails.model.BinDetails;
 import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
 import ch.bfh.ddwm.dssbackend.common.model.PageResult;
 import ch.bfh.ddwm.dssbackend.common.TodayDateProvider;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.time.LocalDate;
+import java.util.List;
 
 import static ch.bfh.ddwm.dssbackend.common.DateKeyHelper.toDateKey;
 import static ch.bfh.ddwm.dssbackend.common.KpiMetricCalculator.buildDecimalMetric;
@@ -98,6 +103,43 @@ public class BinDetailsService {
                 binVisits.totalElements(),
                 binVisits.totalPages()
         );
+    }
+
+    public String getBinVisitsCsv(long binId) {
+        List<BinVisitHistoryResponse> visits = repository.findAllBinVisitsByBinId(binId).stream()
+                .map(this::toBinVisitHistoryResponse)
+                .toList();
+
+        try (StringWriter out = new StringWriter();
+             CSVPrinter printer = new CSVPrinter(
+                     out,
+                     CSVFormat.DEFAULT.builder()
+                             .setHeader(
+                                     "binVisitId",
+                                     "tourId",
+                                     "sequenceInTour",
+                                     "eventTimestamp",
+                                     "licensePlate",
+                                     "fillLevelCode",
+                                     "actionCode"
+                             ).get()
+             )) {
+            for (BinVisitHistoryResponse visit : visits) {
+                printer.printRecord(
+                        visit.binVisitId(),
+                        visit.tourId(),
+                        visit.sequenceInTour(),
+                        visit.eventTimestamp(),
+                        visit.licensePlate(),
+                        visit.fillLevelCode(),
+                        visit.actionCode()
+                );
+            }
+            printer.flush();
+            return out.toString();
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to create CSV export for bin " + binId, e);
+        }
     }
 
     private BinVisitHistoryResponse toBinVisitHistoryResponse(BinVisitHistory binVisitHistory) {

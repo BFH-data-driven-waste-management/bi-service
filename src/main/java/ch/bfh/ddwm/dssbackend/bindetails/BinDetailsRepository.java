@@ -16,10 +16,13 @@ import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.FactBinDailySnapsh
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.FactBinVisit;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.Record8;
+import org.jooq.SelectLimitStep;
 import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -201,7 +204,21 @@ public class BinDetailsRepository {
         long totalElements = totalElementsValue == null ? 0L : totalElementsValue;
         int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / size);
 
-        List<BinVisitHistory> binVisits = dsl
+        List<BinVisitHistory> binVisits = baseBinVisitQuery(binId)
+                .limit(size)
+                .offset(page * size)
+                .fetch(this::toBinVisitHistory);
+
+        return new PageResult<>(binVisits, page, size, totalElements, totalPages);
+    }
+
+    public List<BinVisitHistory> findAllBinVisitsByBinId(long binId) {
+        return baseBinVisitQuery(binId)
+                .fetch(this::toBinVisitHistory);
+    }
+
+    private SelectLimitStep<Record8<Long, Long, Long, Integer, OffsetDateTime, String, String, String>> baseBinVisitQuery(long binId) {
+        return dsl
                 .select(
                         FACT_BIN_VISIT.BIN_VISIT_ID,
                         DIM_BIN.BIN_ID,
@@ -218,21 +235,20 @@ public class BinDetailsRepository {
                 .join(DIM_ACTION).on(DIM_ACTION.ACTION_KEY.eq(FACT_BIN_VISIT.ACTION_KEY))
                 .join(DIM_VEHICLE).on(DIM_VEHICLE.VEHICLE_KEY.eq(FACT_BIN_VISIT.VEHICLE_KEY))
                 .where(DIM_BIN.BIN_ID.eq(binId))
-                .orderBy(FACT_BIN_VISIT.EVENT_TS.desc(), FACT_BIN_VISIT.BIN_VISIT_ID.desc())
-                .limit(size)
-                .offset(page * size)
-                .fetch(record -> new BinVisitHistory(
-                        record.get(FACT_BIN_VISIT.BIN_VISIT_ID),
-                        record.get(DIM_BIN.BIN_ID),
-                        record.get(FACT_BIN_VISIT.TOUR_ID),
-                        record.get(FACT_BIN_VISIT.SEQUENCE_IN_TOUR),
-                        record.get(FACT_BIN_VISIT.EVENT_TS),
-                        record.get(DIM_FILL_LEVEL.FILL_LEVEL_CODE),
-                        record.get(DIM_ACTION.ACTION_CODE),
-                        record.get(DIM_VEHICLE.LICENSE_PLATE)
-                ));
+                .orderBy(FACT_BIN_VISIT.EVENT_TS.desc(), FACT_BIN_VISIT.BIN_VISIT_ID.desc());
+    }
 
-        return new PageResult<>(binVisits, page, size, totalElements, totalPages);
+    private BinVisitHistory toBinVisitHistory(org.jooq.Record8<Long, Long, Long, Integer, java.time.OffsetDateTime, String, String, String> record) {
+        return new BinVisitHistory(
+                record.get(FACT_BIN_VISIT.BIN_VISIT_ID),
+                record.get(DIM_BIN.BIN_ID),
+                record.get(FACT_BIN_VISIT.TOUR_ID),
+                record.get(FACT_BIN_VISIT.SEQUENCE_IN_TOUR),
+                record.get(FACT_BIN_VISIT.EVENT_TS),
+                record.get(DIM_FILL_LEVEL.FILL_LEVEL_CODE),
+                record.get(DIM_ACTION.ACTION_CODE),
+                record.get(DIM_VEHICLE.LICENSE_PLATE)
+        );
     }
 
     private int dateKeyMinusDays(int dateKey, int days) {

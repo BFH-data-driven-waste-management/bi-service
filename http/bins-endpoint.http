@@ -9,3 +9,11 @@ Accept: application/json
 ###
 GET http://localhost:8081/api/bins/bindetails/1
 Accept: application/json
+
+###
+GET http://localhost:8081/api/bins/bindetails/1/visits
+Accept: application/json
+
+###
+GET http://localhost:8081/api/bins/bindetails/1/visits/csv
+Accept: text/csv; charset=utf-8
