@@ -8,8 +8,14 @@ import ch.bfh.ddwm.dssbackend.tours.dto.TourOverviewDTO;
 import ch.bfh.ddwm.dssbackend.tours.dto.VehicleEmptyingDTO;
 import ch.bfh.ddwm.dssbackend.tours.model.Tour;
 import ch.bfh.ddwm.dssbackend.tours.model.TourOverview;
+import ch.bfh.ddwm.dssbackend.tours.model.TourOverviewRow;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.io.StringWriter;
 
 @Service
 public class TourService {
@@ -43,6 +49,37 @@ public class TourService {
         }
 
         return toTourDTO(tour);
+    }
+
+    public String getToursCsv() {
+        var tours = tourRepository.findAllTours();
+
+        try (StringWriter out = new StringWriter();
+             CSVPrinter printer = new CSVPrinter(
+                     out,
+                     CSVFormat.DEFAULT.builder()
+                             .setHeader(
+                                     "tourId",
+                                     "licensePlate",
+                                     "startedAt",
+                                     "endedAt",
+                                     "vehicleEmptyingCount"
+                             ).get()
+             )) {
+            for (TourOverviewRow tour : tours) {
+                printer.printRecord(
+                        tour.tourId(),
+                        tour.licensePlate(),
+                        tour.startedAt(),
+                        tour.endedAt(),
+                        tour.vehicleEmptyingCount()
+                );
+            }
+            printer.flush();
+            return out.toString();
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to create CSV export for tours", e);
+        }
     }
 
     private TourDTO toTourDTO(Tour tour) {

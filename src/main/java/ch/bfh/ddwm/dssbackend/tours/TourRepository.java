@@ -3,10 +3,7 @@ package ch.bfh.ddwm.dssbackend.tours;
 import ch.bfh.ddwm.dssbackend.common.model.PageResult;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.Tables;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.*;
-import ch.bfh.ddwm.dssbackend.tours.model.BinVisit;
-import ch.bfh.ddwm.dssbackend.tours.model.Tour;
-import ch.bfh.ddwm.dssbackend.tours.model.TourOverview;
-import ch.bfh.ddwm.dssbackend.tours.model.VehicleEmptying;
+import ch.bfh.ddwm.dssbackend.tours.model.*;
 import org.jooq.DSLContext;
 import org.jooq.Record10;
 import org.jooq.Record4;
@@ -14,10 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Repository
 public class TourRepository {
@@ -71,6 +65,31 @@ public class TourRepository {
         int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / size);
         return new PageResult<>(buildTourOverviews(tours), page, size, totalElements, totalPages);
     }
+
+
+    public List<TourOverviewRow> findAllTours() {
+        List<TourOverviewRow> tours = dsl.select(
+                        FACT_TOUR.TOUR_ID,
+                        DIM_VEHICLE.LICENSE_PLATE,
+                        FACT_TOUR.VEHICLE_EMPTYING_COUNT,
+                        FACT_TOUR.STARTED_AT_TS,
+                        FACT_TOUR.ENDED_AT_TS
+                )
+                .from(FACT_TOUR)
+                .join(DIM_VEHICLE)
+                .on(DIM_VEHICLE.VEHICLE_KEY.eq(FACT_TOUR.VEHICLE_KEY))
+                .orderBy(FACT_TOUR.STARTED_AT_TS.desc(), FACT_TOUR.TOUR_ID.desc())
+                .fetch(record -> new TourOverviewRow(
+                        record.get(FACT_TOUR.TOUR_ID),
+                        record.get(DIM_VEHICLE.LICENSE_PLATE),
+                        record.get(FACT_TOUR.VEHICLE_EMPTYING_COUNT),
+                        record.get(FACT_TOUR.STARTED_AT_TS),
+                        record.get(FACT_TOUR.ENDED_AT_TS)
+                ));
+
+        return tours.isEmpty() ? Collections.emptyList() : tours;
+    }
+
 
     public Tour findTourById(long tourId) {
         List<TourRow> tours = dsl.select(
@@ -136,7 +155,9 @@ public class TourRepository {
     }
 
     private List<TourOverview> buildTourOverviews(List<TourOverviewRow> tours) {
-        List<Long> tourIds = tours.stream().map(TourOverviewRow::tourId).toList();
+        List<Long> tourIds = tours.stream()
+                .map(TourOverviewRow::tourId)
+                .toList();
         Map<Long, List<VehicleEmptying>> vehicleEmptyingsByTourId = fetchVehicleEmptyingsByTour(tourIds);
         Map<Long, List<BinVisit>> binVisitsByTourId = fetchBinVisitsByTour(tourIds);
 
@@ -226,26 +247,4 @@ public class TourRepository {
 
         return binVisitsByTourId;
     }
-
-    private record TourRow(
-            long tourId,
-            String licensePlate,
-            Integer visitCount,
-            Integer emptiedVisitCount,
-            Integer notEmptiedVisitCount,
-            Integer lowFillVisitCount,
-            Integer highFillVisitCount,
-            Integer overfullVisitCount,
-            Integer vehicleEmptyingCount,
-            OffsetDateTime startedAt,
-            OffsetDateTime endedAt
-    ) {}
-
-    private record TourOverviewRow(
-            long tourId,
-            String licensePlate,
-            Integer vehicleEmptyingCount,
-            OffsetDateTime startedAt,
-            OffsetDateTime endedAt
-    ) {}
 }
