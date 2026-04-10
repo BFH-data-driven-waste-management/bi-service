@@ -34,7 +34,11 @@ public class TourRepository {
                 .fetchOne(0, Long.class);
         long totalElements = totalElementsValue == null ? 0L : totalElementsValue;
 
-        List<TourOverviewRow> tours = mapTourOverviewRows(tourOverviewBaseQuery().limit(size).offset(page * size));
+        List<TourOverviewRow> tours = mapTourOverviewRows(
+                tourOverviewBaseQueryOrderedBy(FACT_TOUR.STARTED_AT_TS.desc(), FACT_TOUR.TOUR_ID.desc())
+                        .limit(size)
+                        .offset(page * size)
+        );
 
         if (tours.isEmpty()) {
             int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / size);
@@ -47,7 +51,7 @@ public class TourRepository {
 
 
     public List<TourOverviewRow> findAllTours() {
-        List<TourOverviewRow> tours = mapTourOverviewRows(tourOverviewBaseQuery());
+        List<TourOverviewRow> tours = mapTourOverviewRows(tourOverviewBaseQueryOrderedBy(FACT_TOUR.TOUR_ID.asc()));
 
         return tours.isEmpty() ? Collections.emptyList() : tours;
     }
@@ -136,7 +140,7 @@ public class TourRepository {
                 .toList();
     }
 
-    private SelectLimitStep<Record5<Long, String, Integer, OffsetDateTime, OffsetDateTime>> tourOverviewBaseQuery() {
+    private SelectLimitStep<Record5<Long, String, Integer, OffsetDateTime, OffsetDateTime>> tourOverviewBaseQueryOrderedBy(SortField<?>... sortFields) {
         return dsl.select(
                         FACT_TOUR.TOUR_ID,
                         DIM_VEHICLE.LICENSE_PLATE,
@@ -147,7 +151,7 @@ public class TourRepository {
                 .from(FACT_TOUR)
                 .join(DIM_VEHICLE)
                 .on(DIM_VEHICLE.VEHICLE_KEY.eq(FACT_TOUR.VEHICLE_KEY))
-                .orderBy(FACT_TOUR.STARTED_AT_TS.desc(), FACT_TOUR.TOUR_ID.desc());
+                .orderBy(sortFields);
     }
 
     private List<TourOverviewRow> mapTourOverviewRows(ResultQuery<Record5<Long, String, Integer, OffsetDateTime, OffsetDateTime>> query) {

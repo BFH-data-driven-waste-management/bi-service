@@ -59,11 +59,11 @@ public class TourService {
                      out,
                      CSVFormat.DEFAULT.builder()
                              .setHeader(
-                                     "tourId",
-                                     "licensePlate",
-                                     "startedAt",
-                                     "endedAt",
-                                     "vehicleEmptyingCount"
+                                     "ID",
+                                     "Fahrzeug",
+                                     "Gestartet am",
+                                     "Beendet am",
+                                     "Anzahl Eimerbesuche"
                              ).get()
              )) {
             for (TourOverviewRow tour : tours) {

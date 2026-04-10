@@ -115,13 +115,13 @@ public class BinDetailsService {
                      out,
                      CSVFormat.DEFAULT.builder()
                              .setHeader(
-                                     "binVisitId",
-                                     "tourId",
-                                     "sequenceInTour",
-                                     "eventTimestamp",
-                                     "licensePlate",
-                                     "fillLevelCode",
-                                     "actionCode"
+                                     "Besuchs-ID",
+                                     "Tour-ID",
+                                     "Position in Tour",
+                                     "Zeitpunkt",
+                                     "Fahrzeug",
+                                     "Füllstand",
+                                     "Aktion"
                              ).get()
              )) {
             for (BinVisitHistoryResponse visit : visits) {
