@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import java.nio.charset.StandardCharsets;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:4200") // TODO move to central config
 @RequestMapping("/api/bins/bindetails")
 public class BinDetailsController {
 

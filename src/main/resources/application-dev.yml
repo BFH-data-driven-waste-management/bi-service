@@ -13,3 +13,5 @@ logging:
 
 dss:
   reference-date: 2026-04-04
+  cors:
+    allowed-origins: http://localhost:4200
