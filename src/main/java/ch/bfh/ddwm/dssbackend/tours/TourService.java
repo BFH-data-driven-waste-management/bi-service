@@ -63,7 +63,7 @@ public class TourService {
                                      "Fahrzeug",
                                      "Gestartet am",
                                      "Beendet am",
-                                     "Anzahl Eimerbesuche"
+                                     "Anzahl Behälterbesuche"
                              ).get()
              )) {
             for (TourOverviewRow tour : tours) {
