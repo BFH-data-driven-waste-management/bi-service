@@ -5,6 +5,3 @@ spring:
     locations: classpath:db/migration/common
     schemas: analytics,analytics_derived
     default-schema: analytics
-
-server:
-  port: 8081
