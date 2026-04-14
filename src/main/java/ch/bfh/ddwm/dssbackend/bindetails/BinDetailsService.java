@@ -106,9 +106,7 @@ public class BinDetailsService {
     }
 
     public String getBinVisitsCsv(long binId) {
-        List<BinVisitHistoryResponse> visits = repository.findAllBinVisitsByBinId(binId).stream()
-                .map(this::toBinVisitHistoryResponse)
-                .toList();
+        List<BinVisitHistory> visits = repository.findAllBinVisitsByBinId(binId);
 
         try (StringWriter out = new StringWriter();
              CSVPrinter printer = new CSVPrinter(
@@ -124,7 +122,7 @@ public class BinDetailsService {
                                      "Aktion"
                              ).get()
              )) {
-            for (BinVisitHistoryResponse visit : visits) {
+            for (BinVisitHistory visit : visits) {
                 printer.printRecord(
                         visit.binVisitId(),
                         visit.tourId(),
