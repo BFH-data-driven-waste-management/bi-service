@@ -33,7 +33,7 @@ public class TourController {
     }
 
     @GetMapping(value = "/csv", produces = "text/csv")
-    public ResponseEntity<String> getToursCsv() {
+    public ResponseEntity<byte[]> getToursCsv() {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition
                         .attachment()
@@ -41,7 +41,7 @@ public class TourController {
                         .build()
                         .toString())
                 .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
-                .body(tourService.getToursCsv());
+                .body(("\uFEFF" + tourService.getToursCsv()).getBytes(StandardCharsets.UTF_8));
     }
 
     // TODO review/verify whole endpoint
