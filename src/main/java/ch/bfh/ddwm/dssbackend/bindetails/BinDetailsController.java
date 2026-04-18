@@ -37,7 +37,7 @@ public class BinDetailsController {
     }
 
     @GetMapping(value = "/{binId}/visits/csv", produces = "text/csv")
-    public ResponseEntity<String> getBinVisitsCsv(@PathVariable long binId) {
+    public ResponseEntity<byte[]> getBinVisitsCsv(@PathVariable long binId) {
         String filename = "bin-" + binId + "-visits.csv";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition
@@ -46,6 +46,6 @@ public class BinDetailsController {
                         .build()
                         .toString())
                 .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
-                .body(service.getBinVisitsCsv(binId));
+                .body(("\uFEFF" + service.getBinVisitsCsv(binId)).getBytes(StandardCharsets.UTF_8));
     }
 }
