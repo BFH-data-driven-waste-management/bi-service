@@ -51,7 +51,7 @@ public class BinMapService {
 
         Map<Long, Integer> lastEmptyingHeatByBinId = scaleHeatByBinId(
                 bins,
-                bin -> toBigDecimal(bin.daysSinceLastEmptying())
+                bin -> bin.isActive() ? toBigDecimal(bin.daysSinceLastEmptying()) : BigDecimal.ZERO
         );
 
         return bins.stream()
