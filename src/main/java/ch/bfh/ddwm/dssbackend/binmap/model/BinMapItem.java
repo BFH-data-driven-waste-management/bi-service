@@ -9,6 +9,7 @@ public record BinMapItem(
         BigDecimal coordX4326,
         BigDecimal coordY4326,
         BigDecimal coordX2056,
-        BigDecimal coordY2056
+        BigDecimal coordY2056,
+        Integer daysSinceLastEmptying
 ) {
 }
