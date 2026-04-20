@@ -5,7 +5,6 @@ import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.Tables;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.DimBin;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.FactBinDailySnapshot;
 import org.jooq.DSLContext;
-import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -26,7 +25,6 @@ public class BinMapRepository {
         return dsl
                 .select(
                         DIM_BIN.BIN_ID,
-                        FACT_BIN_DAILY_SNAPSHOT.BIN_KEY,
                         DIM_BIN.BIN_TYPE,
                         FACT_BIN_DAILY_SNAPSHOT.IS_ACTIVE,
                         DIM_BIN.COORD_X_4326,
