@@ -53,7 +53,7 @@ public class TourOverviewRepository {
 
 
     public List<TourOverviewRow> findAllTours() {
-        List<TourOverviewRow> tours = mapTourOverviewRows(tourOverviewBaseQueryOrderedBy(FACT_TOUR.TOUR_ID.asc())); // TODO is sorting by latest (like in bin visits export) better?
+        List<TourOverviewRow> tours = mapTourOverviewRows(tourOverviewBaseQueryOrderedBy(FACT_TOUR.STARTED_AT_TS.desc(), FACT_TOUR.TOUR_ID.desc()));
 
 
         return tours.isEmpty() ? Collections.emptyList() : tours;
