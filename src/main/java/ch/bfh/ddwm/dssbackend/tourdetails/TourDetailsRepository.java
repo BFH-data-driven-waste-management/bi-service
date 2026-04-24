@@ -1,5 +1,7 @@
 package ch.bfh.ddwm.dssbackend.tourdetails;
 
+import ch.bfh.ddwm.dssbackend.common.repository.BinVisitRepository;
+import ch.bfh.ddwm.dssbackend.common.repository.VehicleEmptyingRepository;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.Tables;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.*;
 import ch.bfh.ddwm.dssbackend.common.model.BinVisit;
@@ -7,14 +9,8 @@ import ch.bfh.ddwm.dssbackend.tourdetails.model.Tour;
 import ch.bfh.ddwm.dssbackend.tourdetails.model.TourRow;
 import ch.bfh.ddwm.dssbackend.common.model.VehicleEmptying;
 import org.jooq.DSLContext;
-import org.jooq.Record10;
-import org.jooq.Record4;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,16 +19,16 @@ public class TourDetailsRepository {
 
     private static final FactTour FACT_TOUR = Tables.FACT_TOUR;
     private static final DimVehicle DIM_VEHICLE = Tables.DIM_VEHICLE;
-    private static final FactBinVisit FACT_BIN_VISIT = Tables.FACT_BIN_VISIT;
-    private static final FactVehicleEmptying FACT_VEHICLE_EMPTYING = Tables.FACT_VEHICLE_EMPTYING;
-    private static final DimAction DIM_ACTION = Tables.DIM_ACTION;
-    private static final DimFillLevel DIM_FILL_LEVEL = Tables.DIM_FILL_LEVEL;
-    private static final DimBin DIM_BIN = Tables.DIM_BIN;
 
     private final DSLContext dsl;
 
-    public TourDetailsRepository(DSLContext dsl) {
+    private final VehicleEmptyingRepository vehicleEmptyingRepository;
+    private final BinVisitRepository binVisitRepository;
+
+    public TourDetailsRepository(DSLContext dsl, VehicleEmptyingRepository vehicleEmptyingRepository, BinVisitRepository binVisitRepository) {
         this.dsl = dsl;
+        this.vehicleEmptyingRepository = vehicleEmptyingRepository;
+        this.binVisitRepository = binVisitRepository;
     }
 
 
@@ -77,8 +73,8 @@ public class TourDetailsRepository {
 
     private List<Tour> buildTours(List<TourRow> tours) {
         List<Long> tourIds = tours.stream().map(TourRow::tourId).toList();
-        Map<Long, List<VehicleEmptying>> vehicleEmptyingsByTourId = fetchVehicleEmptyingsByTour(tourIds);
-        Map<Long, List<BinVisit>> binVisitsByTourId = fetchBinVisitsByTour(tourIds);
+        Map<Long, List<VehicleEmptying>> vehicleEmptyingsByTourId = vehicleEmptyingRepository.fetchVehicleEmptyingsByTour(tourIds);
+        Map<Long, List<BinVisit>> binVisitsByTourId = binVisitRepository.fetchBinVisitsByTour(tourIds);
 
         return tours.stream()
                 .map(tour -> new Tour(
@@ -97,81 +93,5 @@ public class TourDetailsRepository {
                         binVisitsByTourId.getOrDefault(tour.tourId(), List.of())
                 ))
                 .toList();
-    }
-
-    // TODO duplicate
-    private Map<Long, List<VehicleEmptying>> fetchVehicleEmptyingsByTour(List<Long> tourIds) {
-        Map<Long, List<VehicleEmptying>> vehicleEmptyingsByTourId = new HashMap<>();
-
-        for (Record4<Long, Long, Integer, OffsetDateTime> row : dsl.select(
-                        FACT_VEHICLE_EMPTYING.TOUR_ID,
-                        FACT_VEHICLE_EMPTYING.VEHICLE_EMPTYING_KEY,
-                        FACT_VEHICLE_EMPTYING.SEQUENCE_IN_TOUR,
-                        FACT_VEHICLE_EMPTYING.EVENT_TS
-                )
-                .from(FACT_VEHICLE_EMPTYING)
-                .where(FACT_VEHICLE_EMPTYING.TOUR_ID.in(tourIds))
-                .orderBy(FACT_VEHICLE_EMPTYING.TOUR_ID.asc(), FACT_VEHICLE_EMPTYING.SEQUENCE_IN_TOUR.asc())
-                .fetch()) {
-            Long tourId = row.get(FACT_VEHICLE_EMPTYING.TOUR_ID);
-            VehicleEmptying vehicleEmptying = new VehicleEmptying(
-                    row.get(FACT_VEHICLE_EMPTYING.VEHICLE_EMPTYING_KEY),
-                    row.get(FACT_VEHICLE_EMPTYING.SEQUENCE_IN_TOUR),
-                    row.get(FACT_VEHICLE_EMPTYING.EVENT_TS)
-            );
-
-            vehicleEmptyingsByTourId
-                    .computeIfAbsent(tourId, ignored -> new ArrayList<>())
-                    .add(vehicleEmptying);
-        }
-
-        return vehicleEmptyingsByTourId;
-    }
-
-    // TODO duplicate
-    private Map<Long, List<BinVisit>> fetchBinVisitsByTour(List<Long> tourIds) {
-        Map<Long, List<BinVisit>> binVisitsByTourId = new HashMap<>();
-
-        for (Record10<Long, Long, Long, Integer, OffsetDateTime, String, String, BigDecimal, BigDecimal, String> row : dsl.select(
-                        FACT_BIN_VISIT.TOUR_ID,
-                        DIM_BIN.BIN_ID,
-                        FACT_BIN_VISIT.BIN_VISIT_ID,
-                        FACT_BIN_VISIT.SEQUENCE_IN_TOUR,
-                        FACT_BIN_VISIT.EVENT_TS,
-                        DIM_ACTION.ACTION_CODE,
-                        DIM_FILL_LEVEL.FILL_LEVEL_CODE,
-                        DIM_BIN.COORD_X_4326,
-                        DIM_BIN.COORD_Y_4326,
-                        DIM_BIN.BIN_TYPE
-                )
-                .from(FACT_BIN_VISIT)
-                .join(DIM_ACTION)
-                .on(DIM_ACTION.ACTION_KEY.eq(FACT_BIN_VISIT.ACTION_KEY))
-                .join(DIM_FILL_LEVEL)
-                .on(DIM_FILL_LEVEL.FILL_LEVEL_KEY.eq(FACT_BIN_VISIT.FILL_LEVEL_KEY))
-                .join(DIM_BIN)
-                .on(DIM_BIN.BIN_KEY.eq(FACT_BIN_VISIT.BIN_KEY))
-                .where(FACT_BIN_VISIT.TOUR_ID.in(tourIds))
-                .orderBy(FACT_BIN_VISIT.TOUR_ID.asc(), FACT_BIN_VISIT.SEQUENCE_IN_TOUR.asc())
-                .fetch()) {
-            Long tourId = row.get(FACT_BIN_VISIT.TOUR_ID);
-            BinVisit visit = new BinVisit(
-                    row.get(FACT_BIN_VISIT.BIN_VISIT_ID),
-                    row.get(DIM_BIN.BIN_ID),
-                    row.get(FACT_BIN_VISIT.SEQUENCE_IN_TOUR),
-                    row.get(FACT_BIN_VISIT.EVENT_TS),
-                    row.get(DIM_ACTION.ACTION_CODE),
-                    row.get(DIM_FILL_LEVEL.FILL_LEVEL_CODE),
-                    row.get(DIM_BIN.COORD_X_4326),
-                    row.get(DIM_BIN.COORD_Y_4326),
-                    row.get(DIM_BIN.BIN_TYPE)
-            );
-
-            binVisitsByTourId
-                    .computeIfAbsent(tourId, ignored -> new ArrayList<>())
-                    .add(visit);
-        }
-
-        return binVisitsByTourId;
     }
 }
