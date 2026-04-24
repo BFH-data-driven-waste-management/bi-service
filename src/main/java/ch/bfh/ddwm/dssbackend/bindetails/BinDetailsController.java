@@ -31,7 +31,7 @@ public class BinDetailsController {
     @GetMapping("/{binId}/visits")
     public PageResponse<BinVisitHistoryResponse> getBinVisits(
             @PathVariable long binId,
-            @PageableDefault(size = 10) Pageable pageable
+            @PageableDefault() Pageable pageable
     ) {
         return service.getBinVisits(binId, pageable);
     }
