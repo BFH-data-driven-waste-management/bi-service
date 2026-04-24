@@ -1,8 +1,7 @@
-package ch.bfh.ddwm.dssbackend.tours;
+package ch.bfh.ddwm.dssbackend.toursoverview;
 
 import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
-import ch.bfh.ddwm.dssbackend.tours.dto.TourDTO;
-import ch.bfh.ddwm.dssbackend.tours.dto.TourOverviewDTO;
+import ch.bfh.ddwm.dssbackend.toursoverview.dto.TourOverviewResponse;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -10,26 +9,24 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
 
 @RestController
-@RequestMapping("/api/tours")
-public class TourController {
+@RequestMapping("/api/touroverview")
+public class TourOverviewController {
 
-    private final TourService tourService;
+    private final TourOverviewService tourOverviewService;
 
-    public TourController(TourService tourService) {
-        this.tourService = tourService;
+    public TourOverviewController(TourOverviewService tourOverviewService) {
+        this.tourOverviewService = tourOverviewService;
     }
 
-    // TODO review/verify whole endpoint
     @GetMapping
-    public PageResponse<TourOverviewDTO> getTours(@PageableDefault(size = 4) Pageable pageable) {
-        return tourService.getTours(pageable);
+    public PageResponse<TourOverviewResponse> getTours(@PageableDefault(size = 4) Pageable pageable) {
+        return tourOverviewService.getTours(pageable);
     }
 
     @GetMapping(value = "/csv", produces = "text/csv")
@@ -41,12 +38,6 @@ public class TourController {
                         .build()
                         .toString())
                 .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
-                .body(("\uFEFF" + tourService.getToursCsv()).getBytes(StandardCharsets.UTF_8));
-    }
-
-    // TODO review/verify whole endpoint
-    @GetMapping("/{tourId}")
-    public TourDTO getTourById(@PathVariable long tourId) {
-        return tourService.getTourById(tourId);
+                .body(("\uFEFF" + tourOverviewService.getToursCsv()).getBytes(StandardCharsets.UTF_8));
     }
 }

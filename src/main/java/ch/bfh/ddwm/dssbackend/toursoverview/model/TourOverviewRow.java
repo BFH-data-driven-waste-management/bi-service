@@ -1,4 +1,4 @@
-package ch.bfh.ddwm.dssbackend.tours.model;
+package ch.bfh.ddwm.dssbackend.toursoverview.model;
 
 import java.time.OffsetDateTime;
 

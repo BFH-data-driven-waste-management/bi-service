@@ -1,4 +1,4 @@
-package ch.bfh.ddwm.dssbackend.tours.model;
+package ch.bfh.ddwm.dssbackend.common.dto;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;

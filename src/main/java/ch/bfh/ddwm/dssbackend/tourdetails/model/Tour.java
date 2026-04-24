@@ -1,4 +1,7 @@
-package ch.bfh.ddwm.dssbackend.tours.model;
+package ch.bfh.ddwm.dssbackend.tourdetails.model;
+
+import ch.bfh.ddwm.dssbackend.common.model.BinVisit;
+import ch.bfh.ddwm.dssbackend.common.model.VehicleEmptying;
 
 import java.time.OffsetDateTime;
 import java.util.List;

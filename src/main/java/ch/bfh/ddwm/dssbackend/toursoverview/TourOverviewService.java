@@ -1,14 +1,12 @@
-package ch.bfh.ddwm.dssbackend.tours;
+package ch.bfh.ddwm.dssbackend.toursoverview;
 
 import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
+import ch.bfh.ddwm.dssbackend.common.dto.VehicleEmptying;
+import ch.bfh.ddwm.dssbackend.common.dto.BinVisit;
 import ch.bfh.ddwm.dssbackend.common.model.PageResult;
-import ch.bfh.ddwm.dssbackend.tours.dto.BinVisitDTO;
-import ch.bfh.ddwm.dssbackend.tours.dto.TourDTO;
-import ch.bfh.ddwm.dssbackend.tours.dto.TourOverviewDTO;
-import ch.bfh.ddwm.dssbackend.tours.dto.VehicleEmptyingDTO;
-import ch.bfh.ddwm.dssbackend.tours.model.Tour;
-import ch.bfh.ddwm.dssbackend.tours.model.TourOverview;
-import ch.bfh.ddwm.dssbackend.tours.model.TourOverviewRow;
+import ch.bfh.ddwm.dssbackend.toursoverview.dto.TourOverviewResponse;
+import ch.bfh.ddwm.dssbackend.toursoverview.model.TourOverview;
+import ch.bfh.ddwm.dssbackend.toursoverview.model.TourOverviewRow;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.springframework.data.domain.Pageable;
@@ -18,22 +16,22 @@ import java.io.IOException;
 import java.io.StringWriter;
 
 @Service
-public class TourService {
-    private final TourRepository tourRepository;
+public class TourOverviewService {
+    private final TourOverviewRepository tourOverviewRepository;
 
-    public TourService(TourRepository tourRepository) {
-        this.tourRepository = tourRepository;
+    public TourOverviewService(TourOverviewRepository tourOverviewRepository) {
+        this.tourOverviewRepository = tourOverviewRepository;
     }
 
-    public PageResponse<TourOverviewDTO> getTours(Pageable pageable) {
+    public PageResponse<TourOverviewResponse> getTours(Pageable pageable) {
         int normalizedPage = Math.max(pageable.getPageNumber(), 0);
         int normalizedSize = Math.max(pageable.getPageSize(), 1);
 
-        PageResult<TourOverview> tours = tourRepository.findTours(normalizedPage, normalizedSize);
+        PageResult<TourOverview> tours = tourOverviewRepository.findTours(normalizedPage, normalizedSize);
 
         return new PageResponse<>(
                 tours.content().stream()
-                        .map(this::toTourOverviewDTO)
+                        .map(this::toTourOverviewResponse)
                         .toList(),
                 tours.page(),
                 tours.size(),
@@ -42,17 +40,8 @@ public class TourService {
         );
     }
 
-    public TourDTO getTourById(long tourId) {
-        Tour tour = tourRepository.findTourById(tourId);
-        if (tour == null) {
-            throw new IllegalStateException("No tour found for tour_id " + tourId);
-        }
-
-        return toTourDTO(tour);
-    }
-
     public String getToursCsv() {
-        var tours = tourRepository.findAllTours();
+        var tours = tourOverviewRepository.findAllTours();
 
         try (StringWriter out = new StringWriter();
              CSVPrinter printer = new CSVPrinter(
@@ -82,58 +71,24 @@ public class TourService {
         }
     }
 
-    private TourDTO toTourDTO(Tour tour) {
-        return new TourDTO(
-                tour.id(),
-                tour.licensePlate(),
-                tour.visitCount(),
-                tour.emptiedVisitCount(),
-                tour.notEmptiedVisitCount(),
-                tour.lowFillVisitCount(),
-                tour.highFillVisitCount(),
-                tour.overfullVisitCount(),
-                tour.vehicleEmptyingCount(),
-                tour.startedAt(),
-                tour.endedAt(),
-                tour.vehicleEmptyings().stream()
-                        .map(vehicleEmptying -> new VehicleEmptyingDTO(
-                                vehicleEmptying.id(),
-                                vehicleEmptying.sequenceInTour(),
-                                vehicleEmptying.eventTimestamp()
-                        ))
-                        .toList(),
-                tour.binVisits().stream()
-                        .map(binVisit -> new BinVisitDTO(
-                                binVisit.id(),
-                                binVisit.binId(),
-                                binVisit.sequenceInTour(),
-                                binVisit.eventTimestamp(),
-                                binVisit.visitAction(),
-                                binVisit.fillLevel(),
-                                binVisit.binCoordX(),
-                                binVisit.binCoordY(),
-                                binVisit.binType()
-                        ))
-                        .toList()
-        );
-    }
 
-    private TourOverviewDTO toTourOverviewDTO(TourOverview tourOverview) {
-        return new TourOverviewDTO(
+
+    private TourOverviewResponse toTourOverviewResponse(TourOverview tourOverview) {
+        return new TourOverviewResponse(
                 tourOverview.id(),
                 tourOverview.licensePlate(),
                 tourOverview.vehicleEmptyingCount(),
                 tourOverview.startedAt(),
                 tourOverview.endedAt(),
                 tourOverview.vehicleEmptyings().stream()
-                        .map(vehicleEmptying -> new VehicleEmptyingDTO(
+                        .map(vehicleEmptying -> new VehicleEmptying(
                                 vehicleEmptying.id(),
                                 vehicleEmptying.sequenceInTour(),
                                 vehicleEmptying.eventTimestamp()
                         ))
                         .toList(),
                 tourOverview.binVisits().stream()
-                        .map(binVisit -> new BinVisitDTO(
+                        .map(binVisit -> new BinVisit(
                                 binVisit.id(),
                                 binVisit.binId(),
                                 binVisit.sequenceInTour(),

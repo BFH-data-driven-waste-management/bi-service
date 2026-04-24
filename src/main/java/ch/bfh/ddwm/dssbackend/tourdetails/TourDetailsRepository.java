@@ -1,18 +1,25 @@
-package ch.bfh.ddwm.dssbackend.tours;
+package ch.bfh.ddwm.dssbackend.tourdetails;
 
-import ch.bfh.ddwm.dssbackend.common.model.PageResult;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.Tables;
 import ch.bfh.ddwm.dssbackend.jooq.generated.analytics.tables.*;
-import ch.bfh.ddwm.dssbackend.tours.model.*;
-import org.jooq.*;
+import ch.bfh.ddwm.dssbackend.common.model.BinVisit;
+import ch.bfh.ddwm.dssbackend.tourdetails.model.Tour;
+import ch.bfh.ddwm.dssbackend.tourdetails.model.TourRow;
+import ch.bfh.ddwm.dssbackend.common.model.VehicleEmptying;
+import org.jooq.DSLContext;
+import org.jooq.Record10;
+import org.jooq.Record4;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Repository
-public class TourRepository {
+public class TourDetailsRepository {
 
     private static final FactTour FACT_TOUR = Tables.FACT_TOUR;
     private static final DimVehicle DIM_VEHICLE = Tables.DIM_VEHICLE;
@@ -24,37 +31,8 @@ public class TourRepository {
 
     private final DSLContext dsl;
 
-    public TourRepository(DSLContext dsl) {
+    public TourDetailsRepository(DSLContext dsl) {
         this.dsl = dsl;
-    }
-
-    public PageResult<TourOverview> findTours(int page, int size) {
-        Long totalElementsValue = dsl.selectCount()
-                .from(FACT_TOUR)
-                .fetchOne(0, Long.class);
-        long totalElements = totalElementsValue == null ? 0L : totalElementsValue;
-
-        List<TourOverviewRow> tours = mapTourOverviewRows(
-                tourOverviewBaseQueryOrderedBy(FACT_TOUR.STARTED_AT_TS.desc(), FACT_TOUR.TOUR_ID.desc())
-                        .limit(size)
-                        .offset(page * size)
-        );
-
-        if (tours.isEmpty()) {
-            int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / size);
-            return new PageResult<>(List.of(), page, size, totalElements, totalPages);
-        }
-
-        int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / size);
-        return new PageResult<>(buildTourOverviews(tours), page, size, totalElements, totalPages);
-    }
-
-
-    public List<TourOverviewRow> findAllTours() {
-        List<TourOverviewRow> tours = mapTourOverviewRows(tourOverviewBaseQueryOrderedBy(FACT_TOUR.TOUR_ID.asc())); // TODO is sorting by latest (like in bin visits export) better?
-
-
-        return tours.isEmpty() ? Collections.emptyList() : tours;
     }
 
 
@@ -121,50 +99,7 @@ public class TourRepository {
                 .toList();
     }
 
-    private List<TourOverview> buildTourOverviews(List<TourOverviewRow> tours) {
-        List<Long> tourIds = tours.stream()
-                .map(TourOverviewRow::tourId)
-                .toList();
-        Map<Long, List<VehicleEmptying>> vehicleEmptyingsByTourId = fetchVehicleEmptyingsByTour(tourIds);
-        Map<Long, List<BinVisit>> binVisitsByTourId = fetchBinVisitsByTour(tourIds);
-
-        return tours.stream()
-                .map(tour -> new TourOverview(
-                        tour.tourId(),
-                        tour.licensePlate(),
-                        tour.vehicleEmptyingCount(),
-                        tour.startedAt(),
-                        tour.endedAt(),
-                        vehicleEmptyingsByTourId.getOrDefault(tour.tourId(), List.of()),
-                        binVisitsByTourId.getOrDefault(tour.tourId(), List.of())
-                ))
-                .toList();
-    }
-
-    private SelectLimitStep<Record5<Long, String, Integer, OffsetDateTime, OffsetDateTime>> tourOverviewBaseQueryOrderedBy(SortField<?>... sortFields) {
-        return dsl.select(
-                        FACT_TOUR.TOUR_ID,
-                        DIM_VEHICLE.LICENSE_PLATE,
-                        FACT_TOUR.VEHICLE_EMPTYING_COUNT,
-                        FACT_TOUR.STARTED_AT_TS,
-                        FACT_TOUR.ENDED_AT_TS
-                )
-                .from(FACT_TOUR)
-                .join(DIM_VEHICLE)
-                .on(DIM_VEHICLE.VEHICLE_KEY.eq(FACT_TOUR.VEHICLE_KEY))
-                .orderBy(sortFields);
-    }
-
-    private List<TourOverviewRow> mapTourOverviewRows(ResultQuery<Record5<Long, String, Integer, OffsetDateTime, OffsetDateTime>> query) {
-        return query.fetch(record -> new TourOverviewRow(
-                record.get(FACT_TOUR.TOUR_ID),
-                record.get(DIM_VEHICLE.LICENSE_PLATE),
-                record.get(FACT_TOUR.VEHICLE_EMPTYING_COUNT),
-                record.get(FACT_TOUR.STARTED_AT_TS),
-                record.get(FACT_TOUR.ENDED_AT_TS)
-        ));
-    }
-
+    // TODO duplicate
     private Map<Long, List<VehicleEmptying>> fetchVehicleEmptyingsByTour(List<Long> tourIds) {
         Map<Long, List<VehicleEmptying>> vehicleEmptyingsByTourId = new HashMap<>();
 
@@ -193,6 +128,7 @@ public class TourRepository {
         return vehicleEmptyingsByTourId;
     }
 
+    // TODO duplicate
     private Map<Long, List<BinVisit>> fetchBinVisitsByTour(List<Long> tourIds) {
         Map<Long, List<BinVisit>> binVisitsByTourId = new HashMap<>();
 

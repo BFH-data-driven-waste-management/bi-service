@@ -1,9 +1,9 @@
-package ch.bfh.ddwm.dssbackend.tours.dto;
+package ch.bfh.ddwm.dssbackend.common.model;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-public record BinVisitDTO(
+public record BinVisit(
         long id,
         long binId,
         int sequenceInTour,
