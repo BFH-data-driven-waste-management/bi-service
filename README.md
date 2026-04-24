@@ -42,5 +42,5 @@ mvn generate-sources
 docker compose down -v &&
 docker compose up -d &&
 mvn -Pdev flyway:migrate &&
-mvn generate-sources
+mvn -Pdev generate-sources
 ```
