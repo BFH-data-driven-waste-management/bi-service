@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/tourdetails")
+@RequestMapping("/api/tours/tourdetails")
 public class TourDetailsController {
 
     private final TourDetailsService tourDetailsService;
