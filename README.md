@@ -29,7 +29,7 @@ mvn -Pdev flyway:migrate
 #### 4) Generate jOOQ sources from the current database schema 
 - Must be run after migrations to reflect the latest schema
 ```bash
-mvn generate-sources
+mvn -Pdev generate-sources
 ```
 (alternatively via IntelliJ with Maven plugin)
 
