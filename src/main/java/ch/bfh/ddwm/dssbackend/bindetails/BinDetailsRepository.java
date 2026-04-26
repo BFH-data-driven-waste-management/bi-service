@@ -153,7 +153,7 @@ public class BinDetailsRepository {
         Field<BigDecimal> averageCountPerWeek = DSL.avg(countField.cast(BigDecimal.class))
                 .as("average_count_per_week");
 
-        return dsl
+        var frequencyOverFullWindow = dsl
                 .select(weekStartDateKey, averageCountPerWeek)
                 .from(FACT_BIN_DAILY_SNAPSHOT)
                 .join(DIM_BIN).on(DIM_BIN.BIN_KEY.eq(FACT_BIN_DAILY_SNAPSHOT.BIN_KEY))
@@ -165,6 +165,9 @@ public class BinDetailsRepository {
                         record.get(weekStartDateKey),
                         record.get(averageCountPerWeek)
                 ));
+
+        // drop first element because the first week might be incomplete (average over just <7 days possible)
+        return frequencyOverFullWindow.subList(1, frequencyOverFullWindow.size());
     }
 
     public List<DailyCountPoint> findFillTrend12m(long binId, int startDateKeyInclusive, int endDateKeyInclusive) {
