@@ -205,14 +205,13 @@ public class BinDetailsRepository {
                 .where(DIM_BIN.BIN_ID.eq(binId))
                 .fetchOne(0, Long.class);
         long totalElements = totalElementsValue == null ? 0L : totalElementsValue;
-        int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / size);
 
         List<BinVisitHistory> binVisits = baseBinVisitQuery(binId)
                 .limit(size)
                 .offset(page * size)
                 .fetch(this::toBinVisitHistory);
 
-        return new PageResult<>(binVisits, page, size, totalElements, totalPages);
+        return new PageResult<>(binVisits, page, size, totalElements);
     }
 
     public List<BinVisitHistory> findAllBinVisitsByBinId(long binId) {

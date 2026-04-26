@@ -100,8 +100,7 @@ public class BinDetailsService {
                         .toList(),
                 binVisits.page(),
                 binVisits.size(),
-                binVisits.totalElements(),
-                binVisits.totalPages()
+                binVisits.totalElements()
         );
     }
 

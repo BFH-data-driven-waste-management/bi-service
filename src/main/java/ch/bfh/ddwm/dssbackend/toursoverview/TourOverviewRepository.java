@@ -43,13 +43,11 @@ public class TourOverviewRepository {
                         .offset(page * size)
         );
 
-        if (tours.isEmpty()) {
-            int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / size);
-            return new PageResult<>(List.of(), page, size, totalElements, totalPages);
-        }
-
-        int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / size);
-        return new PageResult<>(buildTourOverviews(tours), page, size, totalElements, totalPages);
+        return new PageResult<>(
+                tours.isEmpty() ? Collections.emptyList() : buildTourOverviews(tours),
+                page,
+                size,
+                totalElements);
     }
 
 

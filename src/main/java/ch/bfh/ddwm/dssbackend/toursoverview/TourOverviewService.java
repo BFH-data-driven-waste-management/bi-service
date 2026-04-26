@@ -35,8 +35,7 @@ public class TourOverviewService {
                         .toList(),
                 tours.page(),
                 tours.size(),
-                tours.totalElements(),
-                tours.totalPages()
+                tours.totalElements()
         );
     }
 
