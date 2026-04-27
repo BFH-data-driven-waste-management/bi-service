@@ -18,7 +18,6 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(CsvExportException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Map<String, String> handleCsvExportError(CsvExportException exception) {
-        return Map.of("message", exception.getMessage());
+    public void handleCsvExportError() {
     }
 }
