@@ -1,11 +1,11 @@
 ###
-GET http://localhost:8080/api/tours?page=0&size=4
+GET http://localhost:8080/api/tours/touroverview?page=0&size=4
 Accept: application/json
 
 ###
-GET http://localhost:8080/api/tours/csv
+GET http://localhost:8080/api/tours/touroverview/csv
 Accept: text/csv; charset=utf-8
 
 ###
-GET http://localhost:8080/api/tours/1073
+GET http://localhost:8080/api/tours/tourdetails/1073
 Accept: application/json
