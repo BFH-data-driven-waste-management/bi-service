@@ -3,6 +3,7 @@ package ch.bfh.ddwm.dssbackend.binmap;
 import ch.bfh.ddwm.dssbackend.binmap.dto.BinMapResponse;
 import ch.bfh.ddwm.dssbackend.binmap.model.BinMapItem;
 import ch.bfh.ddwm.dssbackend.common.TodayDateProvider;
+import ch.bfh.ddwm.dssbackend.common.api.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -38,7 +39,7 @@ public class BinMapService {
 
         List<BinMapItem> bins = repository.findBinMapByDateKey(todayDateKey);
         if (bins.isEmpty()) {
-            throw new IllegalStateException("No bin map available");
+            throw new ResourceNotFoundException("No bin map available");
         }
 
         Map<Long, BigDecimal> averageDailyAdditionByBinId = repository

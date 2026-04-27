@@ -1,5 +1,6 @@
 package ch.bfh.ddwm.dssbackend.toursoverview;
 
+import ch.bfh.ddwm.dssbackend.common.api.CsvExportException;
 import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
 import ch.bfh.ddwm.dssbackend.common.dto.VehicleEmptying;
 import ch.bfh.ddwm.dssbackend.common.dto.BinVisit;
@@ -66,7 +67,7 @@ public class TourOverviewService {
             printer.flush();
             return out.toString();
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to create CSV export for tours", e);
+            throw new CsvExportException("Failed to create CSV export for tours", e);
         }
     }
 

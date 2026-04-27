@@ -1,5 +1,6 @@
 package ch.bfh.ddwm.dssbackend.tourdetails;
 
+import ch.bfh.ddwm.dssbackend.common.api.ResourceNotFoundException;
 import ch.bfh.ddwm.dssbackend.common.dto.BinVisit;
 import ch.bfh.ddwm.dssbackend.tourdetails.dto.TourResponse;
 import ch.bfh.ddwm.dssbackend.common.dto.VehicleEmptying;
@@ -18,7 +19,7 @@ public class TourDetailsService {
     public TourResponse getTourById(long tourId) {
         Tour tour = tourDetailsRepository.findTourById(tourId);
         if (tour == null) {
-            throw new IllegalStateException("No tour found for tour_id " + tourId);
+            throw new ResourceNotFoundException("No tour found for id " + tourId);
         }
 
         return toTourResponse(tour);

@@ -7,7 +7,9 @@ import ch.bfh.ddwm.dssbackend.bindetails.dto.DailyCountResponse;
 import ch.bfh.ddwm.dssbackend.bindetails.model.BinVisitHistory;
 import ch.bfh.ddwm.dssbackend.bindetails.model.BinDayFeatures;
 import ch.bfh.ddwm.dssbackend.bindetails.model.BinDetails;
+import ch.bfh.ddwm.dssbackend.common.api.CsvExportException;
 import ch.bfh.ddwm.dssbackend.common.api.PageResponse;
+import ch.bfh.ddwm.dssbackend.common.api.ResourceNotFoundException;
 import ch.bfh.ddwm.dssbackend.common.model.PageResult;
 import ch.bfh.ddwm.dssbackend.common.TodayDateProvider;
 import org.apache.commons.csv.CSVFormat;
@@ -41,7 +43,7 @@ public class BinDetailsService {
 
         BinDetails binDetails = repository.binDayFeaturesByBinIdAndDateKey(binId, todayDateKey);
         if (binDetails == null) {
-            throw new IllegalStateException("No bin details found for bin " + binId + " at date_key " + todayDateKey);
+            throw new ResourceNotFoundException("No bin details found for bin " + binId + " at date_key " + todayDateKey);
         }
 
         int todayMinus90dDateKey = toDateKey(today.minusDays(90));
@@ -135,7 +137,7 @@ public class BinDetailsService {
             printer.flush();
             return out.toString();
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to create CSV export for bin " + binId, e);
+            throw new CsvExportException("Failed to create CSV export for bin " + binId, e);
         }
     }
 

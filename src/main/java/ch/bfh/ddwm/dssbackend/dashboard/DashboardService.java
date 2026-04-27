@@ -1,5 +1,6 @@
 package ch.bfh.ddwm.dssbackend.dashboard;
 
+import ch.bfh.ddwm.dssbackend.common.api.ResourceNotFoundException;
 import ch.bfh.ddwm.dssbackend.common.dto.KpiMetricResponse;
 import ch.bfh.ddwm.dssbackend.dashboard.dto.CountOfBinTypeResponse;
 import ch.bfh.ddwm.dssbackend.dashboard.dto.DashboardResponse;
@@ -31,7 +32,7 @@ public class DashboardService {
         int todayDateKey = toDateKey(todayDateProvider.today());
 
         if (!repository.hasSystemSummaryForDate(todayDateKey)) {
-            throw new IllegalStateException("No system_day_summary snapshot available up to today");
+            throw new ResourceNotFoundException("No system_day_summary snapshot available up to today");
         }
 
         LocalDate referenceDate = fromDateKey(todayDateKey);
@@ -42,7 +43,7 @@ public class DashboardService {
                         toDateKey(referenceDate.minusDays(30)),
                         toDateKey(referenceDate.minusDays(90))
                 )
-                .orElseThrow(() -> new IllegalStateException("No system_day_summary snapshot available for today"));
+                .orElseThrow(() -> new ResourceNotFoundException("No system_day_summary snapshot available for today"));
 
         InstalledBinsResponse installedBins = new InstalledBinsResponse(
                 systemDayAggregated.activeBinCount(),
