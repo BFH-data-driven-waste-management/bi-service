@@ -22,14 +22,14 @@ docker compose up -d
 
 #### 3) Migrate both common (DDL/schema) and dev (synthetic data) migrations from `src/main/resources/db/migration`
 ```bash
-mvn -Pdev flyway:migrate
+mvn flyway:migrate
 ```
 (alternatively via IntelliJ with Maven plugin)
 
 #### 4) Generate jOOQ sources from the current database schema 
 - Must be run after migrations to reflect the latest schema
 ```bash
-mvn -Pdev generate-sources
+mvn generate-sources
 ```
 (alternatively via IntelliJ with Maven plugin)
 
@@ -41,6 +41,6 @@ mvn -Pdev generate-sources
 ```bash
 docker compose down -v &&
 docker compose up -d &&
-mvn -Pdev flyway:migrate &&
-mvn -Pdev generate-sources
+mvn flyway:migrate &&
+mvn generate-sources
 ```

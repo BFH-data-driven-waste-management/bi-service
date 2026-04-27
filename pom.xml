@@ -154,6 +154,9 @@
     <profiles>
         <profile>
             <id>dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <properties>
                 <jooq.codegen.jdbc.url>jdbc:postgresql://localhost:5434/postgres</jooq.codegen.jdbc.url>
                 <jooq.codegen.jdbc.user>postgres</jooq.codegen.jdbc.user>
