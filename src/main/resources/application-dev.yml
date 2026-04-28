@@ -11,7 +11,7 @@ logging:
     org:
       springframework=DEBUG:
 
-dss:
+bi:
   reference-date: 2026-04-26
   cors:
     allowed-origins: http://localhost:4200

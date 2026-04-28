@@ -1,0 +1,51 @@
+package ch.bfh.ddwm.biservice.bindetails;
+
+import ch.bfh.ddwm.biservice.bindetails.dto.BinDetailsResponse;
+import ch.bfh.ddwm.biservice.bindetails.dto.BinVisitHistoryResponse;
+import ch.bfh.ddwm.biservice.common.api.PageResponse;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.web.bind.annotation.*;
+
+import java.nio.charset.StandardCharsets;
+
+@RestController
+@RequestMapping("/api/bins/bindetails")
+public class BinDetailsController {
+
+    private final BinDetailsService service;
+
+    public BinDetailsController(BinDetailsService service) {
+        this.service = service;
+    }
+
+    @GetMapping("/{binId}")
+    public BinDetailsResponse getBinDetails(@PathVariable long binId) {
+        return service.getBinDetails(binId);
+    }
+
+    @GetMapping("/{binId}/visits")
+    public PageResponse<BinVisitHistoryResponse> getBinVisits(
+            @PathVariable long binId,
+            @PageableDefault() Pageable pageable
+    ) {
+        return service.getBinVisits(binId, pageable);
+    }
+
+    @GetMapping(value = "/{binId}/visits/csv", produces = "text/csv")
+    public ResponseEntity<byte[]> getBinVisitsCsv(@PathVariable long binId) {
+        String filename = "bin-" + binId + "-visits.csv";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition
+                        .attachment()
+                        .filename(filename)
+                        .build()
+                        .toString())
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .body(("\uFEFF" + service.getBinVisitsCsv(binId)).getBytes(StandardCharsets.UTF_8));
+    }
+}

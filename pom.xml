@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ch.bfh.ddwm</groupId>
-    <artifactId>dss-service</artifactId>
+    <artifactId>bi-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>dss-service</name>
-    <description>dss-service</description>
+    <name>bi-service</name>
+    <description>bi-service</description>
     <url/>
     <licenses>
         <license/>
@@ -142,7 +142,7 @@
                             <includes>.*</includes>
                         </database>
                         <target>
-                            <packageName>ch.bfh.ddwm.dssbackend.jooq.generated</packageName>
+                            <packageName>ch.bfh.ddwm.biservice.jooq.generated</packageName>
                             <directory>${project.build.directory}/generated-sources/jooq</directory>
                         </target>
                     </generator>

@@ -1,4 +1,4 @@
-# DSS Service
+# BI Service
 
 ## Dev Setup
 
