@@ -174,10 +174,10 @@ public class BinDetailsRepository {
         Field<Integer> weekStartDateKey = weekStartDateKeyField(FACT_BIN_VISIT.DATE_KEY);
 
         Field<BigDecimal> fillScore = DSL
-                .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("OVERFULL"), BigDecimal.valueOf(0.875))
-                .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("FULL"), BigDecimal.valueOf(0.625))
-                .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("HALF_FULL"), BigDecimal.valueOf(0.375))
-                .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("EMPTY_OR_ALMOST_EMPTY"), BigDecimal.valueOf(0.125))
+                .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("OVERFULL"), BigDecimal.valueOf(1))
+                .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("FULL"), BigDecimal.valueOf(0.66))
+                .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("HALF_FULL"), BigDecimal.valueOf(0.33))
+                .when(DIM_FILL_LEVEL.FILL_LEVEL_CODE.eq("EMPTY_OR_ALMOST_EMPTY"), BigDecimal.valueOf(0))
                 .otherwise(BigDecimal.ZERO);
 
         Field<BigDecimal> avgFillScore = DSL.avg(fillScore).as("avg_fill_score");
