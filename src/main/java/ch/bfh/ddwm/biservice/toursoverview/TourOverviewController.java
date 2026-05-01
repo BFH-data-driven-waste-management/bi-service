@@ -29,6 +29,7 @@ public class TourOverviewController {
         return tourOverviewService.getTours(pageable);
     }
 
+    // The UTF-8 BOM is added at the start of the CSV content (body), so Excel correctly recognises CSV encoding.
     @GetMapping(value = "/csv", produces = "text/csv")
     public ResponseEntity<byte[]> getToursCsv() {
         return ResponseEntity.ok()
