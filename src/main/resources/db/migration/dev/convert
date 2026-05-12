@@ -1,66 +1,45 @@
-#!/usr/bin/env bash
-# Flyway rename helper
+#!/bin/sh
+# Flyway rename helper, macOS-compatible
 
-set -euo pipefail
+set -eu
 
 folder="${1:-.}"
 
-# Resolve folder to absolute path
 if ! folder="$(cd "$folder" && pwd)"; then
   echo "Error: folder not found: $folder" >&2
   exit 1
 fi
 
-declare -A rename_map=(
-  ["dim_fill_level.sql"]="V1000__dim_fill_level.sql"
-  ["dim_action.sql"]="V1001__dim_action.sql"
-  ["dim_connectivity_state.sql"]="V1002__dim_connectivity_state.sql"
-  ["dim_date.sql"]="V1003__dim_date.sql"
-  ["dim_zone.sql"]="V1004__dim_zone.sql"
-  ["dim_vehicle.sql"]="V1005__dim_vehicle.sql"
-  ["dim_bin.sql"]="V1006__dim_bin.sql"
-  ["dim_event.sql"]="V1007__dim_event.sql"
-  ["fact_tour.sql"]="V1008__fact_tour.sql"
-  ["fact_bin_visit.sql"]="V1009__fact_bin_visit.sql"
-  ["fact_vehicle_emptying.sql"]="V1010__fact_vehicle_emptying.sql"
-  ["fact_bin_status_change.sql"]="V1011__fact_bin_status_change.sql"
-  ["fact_weather_day.sql"]="V1012__fact_weather_day.sql"
-  ["fact_event_zone_day.sql"]="V1013__fact_event_zone_day.sql"
-  ["fact_bin_daily_snapshot.sql"]="V1014__fact_bin_day_snapshot.sql"
-  ["system_day_summary.sql"]="V1015__derived_system_day.sql"
-  ["bin_day_features.sql"]="V1016__derived_bin_day_features.sql"
-)
-
-# Separate ordered arrays because Bash associative arrays do not preserve order reliably
-sources=(
-  "dim_fill_level.sql"
-  "dim_action.sql"
-  "dim_connectivity_state.sql"
-  "dim_date.sql"
-  "dim_zone.sql"
-  "dim_vehicle.sql"
-  "dim_bin.sql"
-  "dim_event.sql"
-  "fact_tour.sql"
-  "fact_bin_visit.sql"
-  "fact_vehicle_emptying.sql"
-  "fact_bin_status_change.sql"
-  "fact_weather_day.sql"
-  "fact_event_zone_day.sql"
-  "fact_bin_daily_snapshot.sql"
-  "system_day_summary.sql"
-  "bin_day_features.sql"
-)
-
 echo "Working folder: $folder"
 echo
 
+mapping='
+dim_fill_level.sql|V1000__dim_fill_level.sql
+dim_action.sql|V1001__dim_action.sql
+dim_connectivity_state.sql|V1002__dim_connectivity_state.sql
+dim_date.sql|V1003__dim_date.sql
+dim_zone.sql|V1004__dim_zone.sql
+dim_vehicle.sql|V1005__dim_vehicle.sql
+dim_bin.sql|V1006__dim_bin.sql
+dim_event.sql|V1007__dim_event.sql
+fact_tour.sql|V1008__fact_tour.sql
+fact_bin_visit.sql|V1009__fact_bin_visit.sql
+fact_vehicle_emptying.sql|V1010__fact_vehicle_emptying.sql
+fact_bin_status_change.sql|V1011__fact_bin_status_change.sql
+fact_weather_day.sql|V1012__fact_weather_day.sql
+fact_event_zone_day.sql|V1013__fact_event_zone_day.sql
+fact_bin_daily_snapshot.sql|V1014__fact_bin_day_snapshot.sql
+system_day_summary.sql|V1015__derived_system_day.sql
+bin_day_features.sql|V1016__derived_bin_day_features.sql
+'
+
 # 1) Delete existing Flyway files
-for source_name in "${sources[@]}"; do
-  target_name="${rename_map[$source_name]}"
+echo "$mapping" | while IFS='|' read -r source_name target_name; do
+  [ -z "$source_name" ] && continue
+
   target_path="$folder/$target_name"
 
-  if [[ -e "$target_path" ]]; then
+  if [ -e "$target_path" ]; then
     rm -f -- "$target_path"
     echo "Deleted: $target_name"
   fi
@@ -69,18 +48,18 @@ done
 echo
 
 # 2) Rename raw files to Flyway names
-for source_name in "${sources[@]}"; do
-  target_name="${rename_map[$source_name]}"
+echo "$mapping" | while IFS='|' read -r source_name target_name; do
+  [ -z "$source_name" ] && continue
 
   source_path="$folder/$source_name"
   target_path="$folder/$target_name"
 
-  if [[ ! -e "$source_path" ]]; then
+  if [ ! -e "$source_path" ]; then
     echo "Warning: Source file missing: $source_name" >&2
     continue
   fi
 
-  if [[ -e "$target_path" ]]; then
+  if [ -e "$target_path" ]; then
     echo "Error: Target file still exists after delete pass: $target_name" >&2
     exit 1
   fi
