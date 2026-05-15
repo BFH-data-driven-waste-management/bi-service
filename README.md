@@ -22,9 +22,9 @@ Backend service exposing analytics endpoints over the `analytics` and `analytics
 ---
 ## Execution model
 
-Local execution is based on a Docker Compose service that initialises and starts a PostgreSQL database.
+Local execution is based on a Docker Compose service that initializes and starts a PostgreSQL database.
 Further development execution is based on locally installed software.
-Only the database is containerised.
+Only the database is containerized.
 
 ---
 ## Prerequisites
@@ -53,8 +53,8 @@ See the following section for instructions.
 2. Export each table of the `analytics` and `analytics_derived` schemas as a separate SQL file (multi-row `INSERT` statements) and place the files in `src/main/resources/db/migration/dev`.
 3. Convert the exported files into Flyway-versioned migrations. On first run, make the script executable:
 ```bash
-   chmod +x ./src/main/resources/db/migration/dev/convert
-   ./src/main/resources/db/migration/dev/convert
+chmod +x ./src/main/resources/db/migration/dev/convert
+./src/main/resources/db/migration/dev/convert
 ```
 The script renames each file to the `V{version}__{name}.sql` pattern expected by Flyway, assigning versions consistent with foreign-key dependencies between tables.
 
