@@ -53,11 +53,8 @@ See the following section for instructions.
 2. Export each table of the `analytics` and `analytics_derived` schemas as a separate SQL file (multi-row `INSERT` statements) and place the files in `src/main/resources/db/migration/dev`.
 3. Convert the exported files into Flyway-versioned migrations. On first run, make the script executable:
 ```bash
-   ./src/main/resources/db/migration/dev/convert
-```
-On first run, make the script executable:
-```bash
    chmod +x ./src/main/resources/db/migration/dev/convert
+   ./src/main/resources/db/migration/dev/convert
 ```
 The script renames each file to the `V{version}__{name}.sql` pattern expected by Flyway, assigning versions consistent with foreign-key dependencies between tables.
 
@@ -66,22 +63,21 @@ The script renames each file to the `V{version}__{name}.sql` pattern expected by
 
 ### 1. Start the database container:
 ```bash
-   docker compose up -d
+docker compose up -d
 ```
 Expected result:
 - The `bi-postgres` container is running (verify with `docker ps`), with status `Up`.
 
 ### 2. Apply the `common` (schema) and `dev` (synthetic data) migrations:
 ```bash
-   mvn flyway:migrate
+mvn flyway:migrate
 ```
 Expected result:
-- The `analytics` and `analytics_derived` schemas are populated with the tables and rows defined by the migration scripts under `src/main/resources/db/migration`.
-  Verify by inspecting the database with any PostgreSQL client (e.g. IntelliJ's database tool). Connection URL: `jdbc:postgresql://localhost:5434/postgres`, with user and password both `postgres` (as defined in `docker-compose.yml`).
+- The `analytics` and `analytics_derived` schemas are populated with the tables and rows defined by the migration scripts under `src/main/resources/db/migration`. Verify by inspecting the database with any PostgreSQL client (e.g. IntelliJ's database tool). Connection URL: `jdbc:postgresql://localhost:5434/postgres`, with user and password both `postgres` (as defined in `docker-compose.yml`).
 
 ### 3. Generate jOOQ sources from the migrated schema:
 ```bash
-   mvn generate-sources
+mvn generate-sources
 ```
 This step must be run after migrations so that generated sources reflect the current schema.
 
@@ -104,10 +100,10 @@ Expected result:
 
 - To reset the database and re-run the setup, remove the volume first:
 ```bash
-  docker compose down -v
-  docker compose up -d
-  mvn flyway:migrate
-  mvn generate-sources
+docker compose down -v
+docker compose up -d
+mvn flyway:migrate
+mvn generate-sources
 ```
 
 ---
