@@ -51,11 +51,11 @@ See the following section for instructions.
 
 1. Set up and run the [Data Foundation](https://github.com/BFH-data-driven-waste-management/data-foundation) as instructed in its README.md and USAGE.md.
 2. Export each table of the `analytics` and `analytics_derived` schemas as a separate SQL file (multi-row `INSERT` statements) and place the files in `src/main/resources/db/migration/dev`.
-3. Convert the exported files into Flyway-versioned migrations. On first run, make the script executable:
-```bash
-chmod +x ./src/main/resources/db/migration/dev/convert
-./src/main/resources/db/migration/dev/convert
-```
+3. Convert the exported files into Flyway-versioned migrations. On the first run, make the script executable:
+    ```bash
+    chmod +x ./src/main/resources/db/migration/dev/convert
+    ./src/main/resources/db/migration/dev/convert
+    ```
 The script renames each file to the `V{version}__{name}.sql` pattern expected by Flyway, assigning versions consistent with foreign-key dependencies between tables.
 
 ---
@@ -99,12 +99,12 @@ Expected result:
 ## Additional information
 
 - To reset the database and re-run the setup, remove the volume first:
-```bash
-docker compose down -v
-docker compose up -d
-mvn flyway:migrate
-mvn generate-sources
-```
+    ```bash
+    docker compose down -v
+    docker compose up -d
+    mvn flyway:migrate
+    mvn generate-sources
+    ```
 
 ---
 ## Authors
