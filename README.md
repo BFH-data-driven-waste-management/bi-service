@@ -53,40 +53,42 @@ See the following section for instructions.
 2. Export each table of the `analytics` and `analytics_derived` schemas as a separate SQL file (multi-row `INSERT` statements) and place the files in `src/main/resources/db/migration/dev`.
 3. Convert the exported files into Flyway-versioned migrations. On first run, make the script executable:
 ```bash
-   chmod +x ./src/main/resources/db/migration/dev/convert
    ./src/main/resources/db/migration/dev/convert
+```
+On first run, make the script executable:
+```bash
+   chmod +x ./src/main/resources/db/migration/dev/convert
 ```
 The script renames each file to the `V{version}__{name}.sql` pattern expected by Flyway, assigning versions consistent with foreign-key dependencies between tables.
 
 ---
 ## Environment setup
 
-1. Start the database container:
+### 1. Start the database container:
 ```bash
    docker compose up -d
 ```
 Expected result:
-- The `bi-postgres` container is running (verify with `docker ps`), with status `Up` and port mapping `5434->5432`.
+- The `bi-postgres` container is running (verify with `docker ps`), with status `Up`.
 
-The database is exposed on host port `5434` (see `docker-compose.yml`), so it can run alongside the Data Foundation's database without conflict.
-
-2. Apply the `common` (schema) and `dev` (synthetic data) migrations:
+### 2. Apply the `common` (schema) and `dev` (synthetic data) migrations:
 ```bash
    mvn flyway:migrate
 ```
 Expected result:
 - The `analytics` and `analytics_derived` schemas are populated with the tables and rows defined by the migration scripts under `src/main/resources/db/migration`.
-- Verify by inspecting the database, e.g. `psql postgresql://postgres:postgres@localhost:5434/postgres`.
+  Verify by inspecting the database with any PostgreSQL client (e.g. IntelliJ's database tool). Connection URL: `jdbc:postgresql://localhost:5434/postgres`, with user and password both `postgres` (as defined in `docker-compose.yml`).
 
-3. Generate jOOQ sources from the migrated schema:
+### 3. Generate jOOQ sources from the migrated schema:
 ```bash
    mvn generate-sources
 ```
 This step must be run after migrations so that generated sources reflect the current schema.
-Expected result:
-- `target/generated-sources/jooq/ch/bfh/ddwm/biservice/jooq/generated` contains the `analytics` and `analytics_derived` packages, each with `tables`, `Indexes`, `Keys`, and `Tables` sources.
 
-All Maven steps are also available through the IntelliJ Maven plugin.
+Expected result:
+- `target/generated-sources/jooq/ch/bfh/ddwm/biservice/jooq/generated` contains the `analytics` and `analytics_derived` packages, each with the generated Java classes.
+
+All Maven steps can also be run using the IntelliJ Maven plugin.
 
 ---
 ## Usage
@@ -95,7 +97,7 @@ Start the application with the `dev` profile active.
 The most convenient option is an IDE run configuration; reload the Maven project beforehand if jOOQ sources were just regenerated.
 
 Expected result:
-- The application responds on a representative endpoint (e.g. `GET http://localhost:8080/api/bins/binmap`) with status `200 OK` and a JSON body containing bin map data. See `/http` for ready-to-use request collections, executable with any compatible HTTP client (e.g. IntelliJ).
+- The application responds on a representative endpoint (e.g. `GET http://localhost:8080/api/bins/binmap`) with status `200 OK` and a corresponding JSON body. See `/http` for ready-to-use request collections, executable with any compatible HTTP client (e.g. IntelliJ).
 
 ---
 ## Additional information
