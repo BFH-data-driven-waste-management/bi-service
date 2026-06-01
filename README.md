@@ -105,6 +105,7 @@ Expected result:
     mvn flyway:migrate
     mvn generate-sources
     ```
+- In `dev` profile the `DashboardService` will invoke `DevTodayDateProvider`, which returns a fixed date from `application-dev.yml`. This ensures that the service always returns the data of a given day, which is useful for testing and development. To change the date, modify the `reference-date` property in `application-dev.yml` and restart the application. In this case you have to ensure that data (`system_day_summary` table) for this date is available.
 
 ---
 ## Authors
